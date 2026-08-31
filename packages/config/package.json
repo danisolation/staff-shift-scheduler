@@ -1,0 +1,21 @@
+{
+  "name": "@scheduler/config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./eslint-base": "./eslint-base.js",
+    "./eslint-react": "./eslint-react.js",
+    "./tsconfig.base.json": "./tsconfig.base.json"
+  },
+  "dependencies": {
+    "@eslint/js": "^9.30.0",
+    "eslint-config-prettier": "^10.1.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "typescript-eslint": "^8.35.0"
+  },
+  "peerDependencies": {
+    "eslint": "^9.0.0"
+  }
+}

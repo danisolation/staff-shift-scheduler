@@ -1,0 +1,25 @@
+{
+  "name": "@scheduler/optimizer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "highs": "^1.1.1",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@scheduler/config": "workspace:*",
+    "@types/node": "^22.15.0",
+    "eslint": "^9.30.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}
