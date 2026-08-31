@@ -97,6 +97,7 @@ it, no agent can know what is done and what is next.
 - Trunk-based development with short-lived feature branches: `feat/...`, `fix/...`, `chore/...`, `docs/...`
 - NEVER commit directly to `main`. All work lands via PRs.
 - Conventional Commits, enforced by commitlint: `feat(web): add dashboard charts`
+- Commit messages must NOT include `Co-authored-by` trailers or any bot/contributor attribution. The human is the sole author of every commit in this repo.
 - One commit = one logical change. Rebase/squash before merging.
 - Run lint, typecheck, and tests locally BEFORE pushing. CI runs them anyway; don't let CI be your linter.
 
