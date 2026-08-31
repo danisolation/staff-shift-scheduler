@@ -17,14 +17,15 @@ Status legend:
 
 ## Current state
 
-**Milestone 1 is the active milestone.** Everything below it is done;
-everything above it is blocked until it is finished.
+**Milestone 1 is complete; Milestone 2 is next.** Everything above it is
+blocked until it is finished.
 
 - `[x]` Scaffold — monorepo, docs, CI, initial push. Verified: lint,
   typecheck, test, build green; health-check loop and HiGHS.js self-check
   working end to end.
-- `[~]` **Milestone 1 — Backend foundation (CRUD for employees, skills, shifts)**
-- `[ ]` Milestone 2 — Database (PostgreSQL, Prisma, migrations)
+- `[x]` **Milestone 1 — Backend foundation (CRUD for employees, skills, shifts)**
+  Verified 2026-08-31: all acceptance criteria hold (see below).
+- `[ ]` **Milestone 2 — Database (PostgreSQL, Prisma, migrations)**
 - `[ ]` Milestone 3 — Optimization core (the scheduling model)
 - `[ ]` Milestone 4 — Orchestration (async solve job)
 - `[ ]` Milestone 5 — Frontend integration (forms, calendar, polling)
@@ -64,6 +65,18 @@ everything above it is blocked until it is finished.
 - Manual curl smoke test of every endpoint, including a `400` response on
   invalid input.
 - API responses validated against the shared contracts.
+
+**Verified 2026-08-31:**
+- Lint, typecheck, test (41 tests), build all green.
+- Curl smoke tests passed: skills/employees/shifts CRUD, 201 on create,
+  204 on delete, 400 on malformed bodies and bad uuid params, 409 on
+  duplicate skill names, 400 on unknown skill references, 404 on missing
+  ids, and the contracted `{ statusCode, message, details }` envelope on
+  every error.
+- Two bugs found and fixed during verification: `SKILL_REPOSITORY` was not
+  exported from `SkillsModule` (caught by a new module-wiring test), and
+  cross-field validation was missing from create/update paths (caught by
+  smoke testing, fixed in the contracts + service merged-validation).
 
 **Docs to update:** `ARCHITECTURE.md` ("Where to look next"), plus the
 thorough "What I learned" summary for this milestone.

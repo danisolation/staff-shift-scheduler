@@ -405,15 +405,46 @@ exists to present things.
 
 ## 9. Where to look next
 
-1. `apps/api/src/health/` — three files showing the controller →
-   service → module pattern in miniature. Read the controller first, then
-   the service, then the module that wires them.
-2. `packages/contracts/src/index.ts` — the single source of truth for API
+1. `apps/api/src/skills/` — the smallest full feature: repository (storage
+   contract + in-memory implementation), service (business rules), controller
+   (thin HTTP), module (wiring). Read in that order.
+2. `apps/api/src/employees/` and `apps/api/src/shifts/` — the same pattern
+   with a cross-resource rule: they check referenced skills exist.
+3. `apps/api/src/common/filters/http-exception.filter.ts` — how every error
+   becomes the contracted `{ statusCode, message, details }` envelope.
+4. `packages/contracts/src/index.ts` — the single source of truth for API
    shapes, with a comment per schema.
-3. `apps/optimizer/src/solver.ts` — a tiny LP model with its hand-computed
+5. `apps/optimizer/src/solver.ts` — a tiny LP model with its hand-computed
    answer; the seed of the real scheduling model.
-4. `docs/MONOREPO_BASICS.md` — if you haven't read it, the repo mechanics
+6. `docs/MONOREPO_BASICS.md` — if you haven't read it, the repo mechanics
    live there.
+
+## What I learned — Milestone 1 (backend CRUD)
+
+- **Contract-first pays immediately.** Every API shape is a zod schema in
+  `packages/contracts`; the api validates request bodies against them and
+  parses its own responses with them. When the create schema was missing
+  the "end after start" rule that the response schema had, the runtime
+  caught it during smoke testing — proving both sides of the contract
+  matter, not just the response shape.
+- **Layering catches bugs by construction.** Controllers validate and
+  delegate; services enforce business rules; repositories store. Because
+  the layers are separate, the referential-integrity check (an employee's
+  skills must exist) lives in one place, and both employee and shift
+  services share it via the skill repository.
+- **DI tokens vs interfaces.** TypeScript erases interfaces at compile
+  time, so NestJS cannot use `EmployeeRepository` as an injection key.
+  The fix is a `Symbol('EmployeeRepository')` token. This is a subtle,
+  real-world NestJS detail that unit tests don't surface until you wire
+  modules.
+- **Module exports are opt-in.** NestJS shares nothing across modules by
+  default. `SkillsModule` had to export `SKILL_REPOSITORY` before
+  `EmployeesService` could inject it — a runtime failure the unit tests
+  missed, and the reason a module-wiring test now exists.
+- **Partial updates need merged validation.** A `PATCH` is validated
+  field-by-field, but the *merged* result can still be invalid (moving
+  startMinute past endMinute). The service re-validates the merged entity
+  against the full contract before storing.
 
 ## What I learned
 
