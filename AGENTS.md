@@ -135,6 +135,7 @@ it, no agent can know what is done and what is next.
 - DTO validation via zod schemas from `packages/contracts`.
 - Global exception filter returns a consistent error envelope: `{ statusCode, message, details }`.
 - Env vars: single `ConfigModule` with typed config objects; never `process.env` sprinkled around.
+- Every endpoint must be documented with Swagger/OpenAPI via `@nestjs/swagger`: `@ApiTags` on each controller, and `@ApiOperation` plus request/response schemas (converted from the shared zod contracts) on every handler. The reference is served at `/api/docs` — an endpoint without Swagger documentation is not done.
 
 ### Optimization Engine (apps/optimizer)
 - TypeScript strict, same lint rules as the rest of the repo.
@@ -187,6 +188,7 @@ pnpm typecheck      # tsc --noEmit across the repo
 pnpm test           # run all tests
 pnpm --filter web test          # tests in one package
 pnpm --filter api start:dev     # run NestJS in watch mode
+# Swagger UI: http://localhost:3000/api/docs
 ```
 
 ## 10. Dependency Policy

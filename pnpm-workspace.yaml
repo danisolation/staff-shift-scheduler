@@ -3,4 +3,7 @@ packages:
   - "packages/*"
 
 allowBuilds:
+  # esbuild's postinstall downloads its native binary — required.
   esbuild: true
+  # @scarf/scarf is install telemetry, not functionality — denied.
+  '@scarf/scarf': false
