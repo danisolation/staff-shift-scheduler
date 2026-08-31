@@ -80,11 +80,16 @@ opt/
 ├── packages/
 │   ├── contracts/     # shared zod schemas + types
 │   └── config/        # shared ESLint/TS configs
-├── docs/              # ARCHITECTURE.md, ADRs (architecture decision records)
+├── docs/              # ARCHITECTURE.md, ADRs (architecture decision records), ROADMAP.md
 ├── turbo.json
 ├── pnpm-workspace.yaml
 └── AGENTS.md
 ```
+
+**Progress tracking:** `docs/ROADMAP.md` is the single source of truth for
+project progress. Every agent must read it before starting work and update
+it when a milestone's acceptance criteria are genuinely satisfied. Without
+it, no agent can know what is done and what is next.
 
 ## 5. Git & Workflow
 
@@ -99,6 +104,7 @@ opt/
 
 ### Learning-First Rules (apply everywhere)
 
+- **Fix the owner's English first.** The project owner is learning English. When the owner's message contains grammar, spelling, or phrasing mistakes, the agent corrects them politely before doing anything else: show the original sentence rewritten correctly (with a short note on what changed), then proceed with the task. Corrections come first — before explanations, before code. Never mock; teaching is the point.
 - **Explain before you build.** Before writing backend, database, Docker, or solver code, give a plain-language explanation of the concept and why the industry does it this way. No jargon without defining it. The owner is a frontend developer — assume no backend/devops/optimization knowledge, but fluent frontend knowledge (so frontend analogies are welcome).
 - **Explain thoroughly, not briefly.** Prefer longer, fuller explanations over short summaries. Assume the reader will pause and want the "why" at every step. When a concept has layers (e.g. "what is a REST API" leads to "what is a route" leads to "what is a status code"), walk through each layer. If a step involves multiple new concepts, list them up front, then explain each one before using it.
 - **Simplest correct approach wins.** Prefer the simplest pattern that solves the problem over the cleverest. Introduce a more advanced pattern only after explaining why the simple one falls short.
@@ -164,6 +170,12 @@ A task is done only when ALL of these hold:
 - No new dependencies without justification in the PR description.
 - PR description includes a plain-English explanation of the concepts used (this is a learning repo).
 - Documentation (README/ARCHITECTURE.md) updated if behavior or setup changed.
+
+**Feature sequencing rule:** every feature must be useful and bug-free before
+the next one starts. Never churn out new features while existing ones remain
+unfinished — no stubs, no half-wired screens, no "we'll finish it later"
+endpoints. A feature that is not working end to end blocks all new work
+until it is fixed. Finish and stabilize first; expand second.
 
 ## 9. Useful Commands
 

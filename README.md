@@ -67,7 +67,8 @@ The web app submits a scheduling problem to the api, which returns a **job id** 
 
 ## Documentation
 
-- [docs/MONOREPO_BASICS.md](docs/MONOREPO_BASICS.md) — the guided tour: what a monorepo is, how pnpm workspaces and Turborepo work, every config file explained, and the daily workflow. **Read this first if the repo mechanics are new to you.**
+- [docs/ROADMAP.md](docs/ROADMAP.md) — the live progress tracker: what's done, what's in progress, and each milestone's acceptance criteria. **Read this first to see where the project stands.**
+- [docs/MONOREPO_BASICS.md](docs/MONOREPO_BASICS.md) — the guided tour: what a monorepo is, how pnpm workspaces and Turborepo work, every config file explained, and the daily workflow. Read this if the repo mechanics are new to you.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — how the three services fit together and why: REST, controllers/services/repositories, the request lifecycle, and how a solve actually works
 - [docs/adr/](docs/adr/) — architecture decision records
 - [AGENTS.md](AGENTS.md) — the rulebook every AI agent must follow in this repo
