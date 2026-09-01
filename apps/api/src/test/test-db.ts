@@ -33,6 +33,10 @@ export function getTestDatabaseUrl(): string {
  * RESTART IDENTITY resets any counters (defensive — our ids are UUIDs, so
  * none exist today). Called between tests so each test starts from an
  * empty, known state.
+ *
+ * Because every integration test file shares this one database, Jest is
+ * configured with maxWorkers: 1 (jest.config.json) — parallel test files
+ * would truncate each other's rows mid-test.
  */
 export async function resetDatabase(prisma: PrismaClient): Promise<void> {
   await prisma.$executeRawUnsafe(

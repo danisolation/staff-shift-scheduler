@@ -425,6 +425,10 @@ exists to present things.
    scheduling model itself: pure model builder (variables, constraints,
    fairness linearization, LP text) and the orchestrator that runs HiGHS
    and maps results. `docs/OPTIMIZATION.md` walks through it line by line.
+   `http-server.ts` is its thin HTTP face; `apps/api/src/solves/` is the
+   api side — the job lifecycle (`solves.service.ts`), the typed
+   `OptimizerClient` boundary, and `docs/adr/README.md` ADR-005 for why
+   jobs run in-process.
 8. `docs/MONOREPO_BASICS.md` — if you haven't read it, the repo mechanics
    live there. `docs/DATABASE.md` is the equivalent handbook for everything
    PostgreSQL/Prisma.
@@ -493,6 +497,25 @@ exists to present things.
   only code that knows HiGHS's string API, seconds-not-milliseconds time
   limits, and status strings — and unknown statuses throw rather than
   masquerade as schedules.
+
+## What I learned — Milestone 4 (orchestration)
+
+(The full narrative lives in `docs/MILESTONE-REPORTS.md` and ADR-005.)
+
+- **The async job pattern is mostly an error-handling discipline.** The
+  happy path is three lines; the real work is guaranteeing that every
+  failure — client crash, timeout, database down — lands somewhere
+  visible (`failed` + message) instead of stranding a job in `running`
+  or crashing the process with an unhandled rejection.
+- **Typed boundaries beat stringly ones in both directions.** The api's
+  `HttpOptimizerClient` parses the optimizer's response against the shared
+  contract, so a misbehaving model server can never smuggle a wrong shape
+  into the job row — the same discipline the api applies to its own
+  clients.
+- **Parallel test files vs one shared database.** Adding a second
+  integration suite exposed that Jest runs test files in parallel workers;
+  one shared test database means files must not interleave — `maxWorkers:
+  1` and a documented reason.
 
 ## What I learned
 

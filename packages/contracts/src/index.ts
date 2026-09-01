@@ -160,10 +160,57 @@ export type ShiftList = z.infer<typeof shiftListSchema>;
 // Solve jobs (used from Milestone 4; defined here so the contract is stable)
 // ---------------------------------------------------------------------------
 
+/** One assignment from a finished solve: employee e covers shift s. */
+export const solveAssignmentSchema = z.object({
+  employeeId: z.string().uuid(),
+  shiftId: z.string().uuid(),
+});
+export type SolveAssignment = z.infer<typeof solveAssignmentSchema>;
+
+/**
+ * The result of a finished solve, as produced by the optimizer and stored
+ * on the job row. A discriminated union: `optimal`/`feasible` carry the
+ * schedule (and the objective value — assigned minutes plus the fairness
+ * penalty), `infeasible` carries the human-readable conflict explanations.
+ */
+export const solveResultSchema = z.discriminatedUnion('status', [
+  z.object({
+    status: z.literal('optimal'),
+    objectiveValue: z.number(),
+    assignments: z.array(solveAssignmentSchema),
+  }),
+  z.object({
+    status: z.literal('feasible'),
+    objectiveValue: z.number(),
+    assignments: z.array(solveAssignmentSchema),
+  }),
+  z.object({
+    status: z.literal('infeasible'),
+    // At least one conflict: an infeasibility claim without an explanation
+    // is not accepted across the boundary.
+    conflicts: z.array(z.string()).min(1),
+  }),
+]);
+export type SolveResult = z.infer<typeof solveResultSchema>;
+
+/**
+ * The body of POST /api/solves: the employees and shifts to schedule.
+ * Full employee/shift entities are reused from the CRUD contracts; the
+ * optimizer picks the decision-relevant fields. The api verifies that every
+ * referenced skill id exists before accepting the job.
+ */
+export const solveRequestSchema = z.object({
+  employees: z.array(employeeSchema),
+  shifts: z.array(shiftSchema),
+});
+export type SolveRequest = z.infer<typeof solveRequestSchema>;
+
 /** A schedule solve job as returned by the api (async job pattern). */
 export const solveJobSchema = z.object({
   jobId: z.string().uuid(),
   status: z.enum(['queued', 'running', 'optimal', 'feasible', 'infeasible', 'failed']),
   message: z.string().optional(),
+  /** The finished solve's result — present once status is terminal. */
+  result: solveResultSchema.optional(),
 });
 export type SolveJob = z.infer<typeof solveJobSchema>;

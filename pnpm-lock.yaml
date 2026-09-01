@@ -90,6 +90,9 @@ importers:
 
   apps/optimizer:
     dependencies:
+      '@scheduler/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       highs:
         specifier: ^1.1.1
         version: 1.15.2

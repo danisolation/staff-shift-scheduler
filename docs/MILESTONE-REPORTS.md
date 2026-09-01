@@ -250,3 +250,113 @@ the milestone's story without re-reading every diff.
   `main.ts` the standalone self-check runner, so Milestone 4 can import
   the optimizer without triggering side effects.
 
+---
+
+## Milestone 4 — Orchestration: the async solve job
+
+### What
+
+**Contracts (packages/contracts)**
+
+- `solveAssignmentSchema`, `solveResultSchema` (discriminated union:
+  `optimal`/`feasible` with `objectiveValue` + `assignments`, `infeasible`
+  with ≥1 `conflicts`), `solveRequestSchema` (reuses the full
+  employee/shift entities), and `solveJobSchema` extended with an optional
+  `result`. One schema serves the optimizer's HTTP response, the stored
+  job result, and the api's polling response.
+
+**Optimizer (apps/optimizer)**
+
+- `src/http-server.ts` — the model-server face (ADR-002 realized): a
+  dependency-free `node:http` server, `POST /solve` (validate with
+  `solveRequestSchema` → `solveSchedule` → respond `solveResultSchema`),
+  `GET /health`, the repo's error envelope on 4xx/5xx. `main.ts` boots it
+  on `OPTIMIZER_PORT` (default 3002); `start` script added.
+- Depends on `@scheduler/contracts` now — the first package-to-package
+  contract consumption on the optimizer side.
+- Tests: 6 HTTP tests over real localhost on an ephemeral port (solve,
+  infeasible, invalid shape, non-JSON, health, 404).
+
+**API (apps/api)**
+
+- `src/solves/optimizer-client.ts` — `OPTIMIZER_CLIENT` DI token +
+  `OptimizerClient` interface + `HttpOptimizerClient` (global `fetch`,
+  30s ceiling above the optimizer's own 10s solve limit, response parsed
+  against the shared contract). The only api file that knows the optimizer
+  is HTTP.
+- `src/solves/solves.service.ts` — the job lifecycle: validate referenced
+  skills exist (400 otherwise) → insert `queued` → fire-and-forget
+  `runJob` (`queued → running → terminal`, total error catch mapping
+  anything to `failed` + message) → `findById` for polling, re-validating
+  the stored result JSON through `solveJobSchema`.
+- `src/solves/solves.controller.ts` — `POST /api/solves` (201, instant)
+  and `GET /api/solves/:id`, fully documented in Swagger (visible at
+  `/api/docs`).
+- Migration `20260901124134_add_solve_result`: `SolveJob.result Json?`,
+  applied to dev and test databases.
+- `OPTIMIZER_BASE_URL` added to the validated env schema, `.env.example`,
+  CI env, and Turbo `globalEnv`.
+- Tests: 6 service unit tests (hand-stubbed Prisma + client: queued
+  snapshot, optimal path, infeasible path, failed path, unknown-skill 400,
+  unknown-id 404), the module-wiring graph extended, and the end-to-end
+  integration test (real DB + real HTTP client against a contract-valid
+  optimizer stub server: instant `queued` acceptance, then polling to
+  `optimal` with assignments / `infeasible` with conflicts).
+- Jest now runs with `maxWorkers: 1`: the two integration suites share one
+  test database, and parallel files truncated each other's rows mid-test.
+
+**Docs**
+
+- ADR-005 (in-process jobs; BullMQ/Redis deliberately deferred, upgrade
+  path documented), ARCHITECTURE pointers + M4 lessons, OPTIMIZATION.md
+  "what comes next" refreshed, this report, ROADMAP flip.
+
+### When
+
+- **Completed 2026-09-01**, in a single working session, immediately after
+  Milestone 3 (same day). Sequence: contracts → optimizer HTTP layer →
+  migration → env + typed client → SolvesModule → unit + wiring tests →
+  end-to-end integration test → full gate → live smoke test → docs.
+- Notable timing facts: the live acceptance run measured `POST /api/solves`
+  at **7 ms** (instant `queued`) with polling reporting `optimal` in well
+  under a second — objective 241, exactly the hand-computed fairness value
+  for a Saturday shift. Two environment collisions surfaced: port 3001 was
+  occupied by another project's container (optimizer moved to 3002, same
+  lesson as Milestone 2's 5432→5434), and the shared test database made
+  parallel Jest workers interfere (fixed with `maxWorkers: 1`).
+
+### Why
+
+- **Why a job row instead of holding the request open:** HTTP connections
+  time out, carry no progress, and die with the client. A row in Postgres
+  is durable, pollable, restart-survivable state — and it was already
+  prepared by Milestone 2's migration.
+- **Why fire-and-forget with a total catch:** the pattern's real content
+  is failure discipline. Every branch must terminate the row (`failed` +
+  message) — an unhandled rejection would crash the process, and a silent
+  one would strand a job in `running` forever.
+- **Why no BullMQ yet (ADR-005):** a queue adds Redis and operational
+  weight with no benefit for a single api instance and sub-second solves.
+  `runJob` is public precisely so a future worker calls the same code;
+  the swap is one line at one call site.
+- **Why the optimizer uses `node:http` instead of Nest:** one POST route
+  and one health route — the standard library covers it, zero new
+  dependencies, and the validation still comes from the shared zod
+  contracts. The industry model-server pattern does not require a
+  framework.
+- **Why the client parses the response with the contract:** trust
+  boundaries run in both directions — a misbehaving optimizer must not be
+  able to smuggle a wrong shape into the job row any more than a
+  misbehaving client should into the solver.
+- **Why the api validates referenced skills before accepting a job:** the
+  optimizer matches skill ids only between employees and shifts; a typo'd
+  id would produce a schedule that is silently wrong. The 400 surfaces it
+  at the boundary where the user can fix it.
+- **Why `maxWorkers: 1`:** one test database + parallel Jest files =
+  nondeterministic truncation of each other's rows. Serializing files
+  trades seconds of suite time for determinism.
+- **Why the optimizer moved to port 3002:** 3001 was occupied by another
+  project's container on this machine. Ports are a shared machine
+  resource — adapt our own config, never touch another project's process.
+
+

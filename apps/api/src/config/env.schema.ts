@@ -15,6 +15,8 @@ import { z } from 'zod';
 export const envSchema = z.object({
   /** PostgreSQL connection string for the api's database. */
   DATABASE_URL: z.string().url(),
+  /** Base URL of the optimizer service (POST {base}/solve). */
+  OPTIMIZER_BASE_URL: z.string().url(),
   /** HTTP port the api listens on. */
   PORT: z.coerce.number().int().positive().default(3000),
 });

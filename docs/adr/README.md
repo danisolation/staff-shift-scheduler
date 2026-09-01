@@ -60,3 +60,31 @@ both sides. Changes start in contracts and ripple outward.
 **Consequences.** Runtime validation on both sides from one source of truth;
 TypeScript types are derived from the schemas, so no duplicate type
 definitions.
+
+## ADR-005: Solve jobs run in-process; a real queue is deferred
+
+**Date:** 2026-09-01 · **Status:** Accepted
+
+**Context.** A solve can take seconds, and HTTP requests must never block on
+it (`POST /api/solves` must answer instantly). The industry answer is a job
+queue (BullMQ + Redis, Sidekiq-style). But a queue is another moving part:
+a Redis server, worker processes, new failure modes — for a product whose
+solves are currently sub-second.
+
+**Decision.** The api owns the whole lifecycle in one process: `POST
+/api/solves` validates, inserts a `SolveJob` row (`queued`), fires the work
+in the background (`void runJob(...)`), and answers `201 { jobId }` at once.
+The background run transitions the row (`running` → terminal status) and
+catches *everything* — a job can end `failed` but never stuck, and no
+unhandled rejection can crash the process. Clients poll `GET /api/solves/:id`.
+The job row is the single source of truth; `runJob` is public because a
+future queue worker would call exactly it.
+
+**Consequences.** Zero new infrastructure (no Redis), the flow is fully
+testable (unit tests stub the optimizer client; an integration test drives
+the real lifecycle), and the status history lives in Postgres like every
+other entity. The trade-off, accepted for now: jobs execute only inside the
+api process — a crash loses in-flight work (the row stays `running`), and
+multiple api instances would each run their own jobs. When that matters,
+swapping `void runJob(...)` for an enqueue is a one-line change at a single
+call site; the row state makes workers idempotent.

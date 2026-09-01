@@ -269,13 +269,15 @@ and the test says so on the next run.
 
 ---
 
-## 8. What comes next (Milestone 4)
+## 8. What comes next
 
-The optimizer is now a *library*. Milestone 4 gives it an HTTP face:
-`POST` a problem → solve → return the outcome, and the api orchestrates it
-asynchronously (create a `SolveJob` row — the table we prepared in
-Milestone 2 — return a job id immediately, let clients poll). Long solves
-must never block an HTTP request; the pieces are all in place for that.
+The optimizer is now a real model server: `POST /solve` validates the
+problem against the shared contract, solves it, and answers with the result
+contract; the api orchestrates it asynchronously (ADR-005) — `POST
+/api/solves` returns a job id instantly, and clients poll `GET
+/api/solves/:id` until the job reports `optimal`, `feasible`, or
+`infeasible`. Milestone 5 connects the web app to that flow: submit a
+solve, poll the job, and render the finished schedule on a calendar.
 
 ---
 

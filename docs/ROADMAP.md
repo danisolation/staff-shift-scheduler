@@ -17,7 +17,7 @@ Status legend:
 
 ## Current state
 
-**Milestone 3 is complete; Milestone 4 is next.** Everything above it is
+**Milestone 4 is complete; Milestone 5 is next.** Everything above it is
 blocked until it is finished.
 
 - `[x]` Scaffold — monorepo, docs, CI, initial push. Verified: lint,
@@ -29,7 +29,8 @@ blocked until it is finished.
   Verified 2026-09-01: all acceptance criteria hold (see below).
 - `[x]` **Milestone 3 — Optimization core (the scheduling model)**
   Verified 2026-09-01: all acceptance criteria hold (see below).
-- `[ ]` Milestone 4 — Orchestration (async solve job)
+- `[x]` **Milestone 4 — Orchestration (async solve job)**
+  Verified 2026-09-01: all acceptance criteria hold (see below).
 - `[ ]` Milestone 5 — Frontend integration (forms, calendar, polling)
 - `[ ]` Milestone 6 — Hardening (auth, E2E, containers, polish)
 
@@ -195,6 +196,28 @@ learned".
 polling eventually reports `optimal` with an assignment result.
 
 **Docs:** ADR on the job pattern; "What I learned".
+
+---
+
+**Verified 2026-09-01:**
+- Lint, typecheck, test, build green across all packages (api 66 tests,
+  optimizer 26 — including the new HTTP-layer suite).
+- Live acceptance run: `POST /api/solves` answered in **7 ms** with
+  `{ jobId, status: 'queued' }`; polling `GET /api/solves/:id` reported
+  `optimal` with `objectiveValue` 241 (hand-computed: 240 minutes + 1
+  weekend-fairness unit) and the expected assignment.
+- Error paths live: unknown skill reference → 400 naming the id; unknown
+  job id → 404; both in the contracted error envelope. Both endpoints
+  documented in Swagger (`/api/docs`).
+- Unit tests prove the failure path (client crash → `failed` + message,
+  never stuck in `running`) and the validation path; module-wiring covers
+  the real DI graph including the optimizer client.
+- Migration `add_solve_result` committed and applied to dev and test
+  databases.
+- Jest serialized (`maxWorkers: 1`) after the two integration suites were
+  found to truncate each other's rows through the shared test database.
+- ADR-005 records the in-process job decision and the deferred-queue
+  upgrade path.
 
 ---
 

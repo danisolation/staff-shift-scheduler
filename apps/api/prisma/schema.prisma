@@ -100,13 +100,15 @@ model ShiftSkill {
   @@index([skillId])
 }
 
-// Prepared for Milestone 4 (the async solve job): the api will create a row
-// with status "queued" and update it as the optimizer runs. No code uses it
-// yet — the table exists so the first migration already has the full shape.
+// Prepared for Milestone 4 (the async solve job): the api creates a row
+// with status "queued" and updates it as the optimizer runs. `result`
+// stores the finished solve's outcome (assignments, objective value, or
+// conflicts) as JSON, shaped by solveResultSchema in packages/contracts.
 model SolveJob {
   id        String         @id @default(uuid())
   status    SolveJobStatus @default(queued)
   message   String?
+  result    Json?
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 }

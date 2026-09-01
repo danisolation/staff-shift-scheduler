@@ -33,6 +33,10 @@ jobs:
       # Constructing the Prisma client validates that DATABASE_URL exists,
       # even when no test actually opens a connection (module-wiring test).
       DATABASE_URL: postgresql://scheduler:scheduler@localhost:5433/scheduler_test?schema=public
+      # The env schema requires the optimizer's address at boot. No
+      # optimizer runs in CI: the end-to-end test starts one in-process on
+      # an ephemeral port and overrides this value; it only has to validate.
+      OPTIMIZER_BASE_URL: http://127.0.0.1:3002
 
     steps:
       - uses: actions/checkout@v4
