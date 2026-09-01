@@ -1,13 +1,19 @@
-import { solveModel } from './solver.js';
-
 /**
- * Optimizer service entry point.
- * For now it runs a trivial self-check; the real HTTP API and scheduling
- * model arrive in the optimization step of the learning path.
+ * Optimizer service entry point — the public surface.
+ *
+ * `solveSchedule` is everything Milestone 4's HTTP layer needs: a typed
+ * schedule problem in, a typed outcome out. The model building, diagnosis,
+ * and solver talking all stay behind it.
  */
-async function main(): Promise<void> {
-  const result = await solveModel();
-  console.log(`HiGHS.js ready. Self-check status: ${result.status}`);
-}
-
-void main();
+export { solveSchedule } from './solve-schedule.js';
+export { solveModel } from './solver.js';
+export { DEFAULT_SOLVER_CONFIG } from './types.js';
+export type {
+  Assignment,
+  AvailabilityWindow,
+  ScheduleProblem,
+  ScheduleProblemEmployee,
+  ScheduleProblemShift,
+  SolveOutcome,
+  SolverConfig,
+} from './types.js';

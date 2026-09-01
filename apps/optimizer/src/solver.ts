@@ -23,7 +23,7 @@ Bounds
 End`);
 
   if (solution.Status === 'Optimal') {
-    return { status: 'optimal', objectiveValue: solution.ObjectiveValue };
+    return { status: 'optimal', objectiveValue: solution.ObjectiveValue, assignments: [] };
   }
   return { status: 'infeasible', conflicts: ['self-check model unexpectedly infeasible'] };
 }

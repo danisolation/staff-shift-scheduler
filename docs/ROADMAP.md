@@ -17,7 +17,7 @@ Status legend:
 
 ## Current state
 
-**Milestone 2 is complete; Milestone 3 is next.** Everything above it is
+**Milestone 3 is complete; Milestone 4 is next.** Everything above it is
 blocked until it is finished.
 
 - `[x]` Scaffold — monorepo, docs, CI, initial push. Verified: lint,
@@ -27,7 +27,8 @@ blocked until it is finished.
   Verified 2026-08-31: all acceptance criteria hold (see below).
 - `[x]` **Milestone 2 — Database (PostgreSQL, Prisma, migrations)**
   Verified 2026-09-01: all acceptance criteria hold (see below).
-- `[ ]` Milestone 3 — Optimization core (the scheduling model)
+- `[x]` **Milestone 3 — Optimization core (the scheduling model)**
+  Verified 2026-09-01: all acceptance criteria hold (see below).
 - `[ ]` Milestone 4 — Orchestration (async solve job)
 - `[ ]` Milestone 5 — Frontend integration (forms, calendar, polling)
 - `[ ]` Milestone 6 — Hardening (auth, E2E, containers, polish)
@@ -151,6 +152,26 @@ exactly; infeasible case returns an actionable explanation.
 
 **Docs:** `docs/OPTIMIZATION.md` (plain-language MIP tutorial); "What I
 learned".
+
+---
+
+**Verified 2026-09-01:**
+- Lint, typecheck, test (20 optimizer tests, all expectations hand-computed
+  before running), build all green across the monorepo.
+- `buildScheduleModel` produces CPLEX LP text asserted character-for-
+  character in tests, with a registry mapping LP variable names back to
+  real ids.
+- Numerical cases match hand-computed answers exactly: 240 (single shift),
+  480 (skill pruning), 241 (weekend fairness penalty), 481 (two weekend
+  shifts balanced one per employee via the min-max fairness variable), 480
+  (contract cap exactly consumed).
+- The deliberately infeasible cases return structured, actionable
+  conflicts: headcount 2 with a pool of 1 names the shift and the counts;
+  720 demanded vs 480 contracted minutes names both numbers.
+- Unknown solver statuses throw rather than masquerade as schedules; every
+  returned schedule is verified to satisfy exact shift headcounts.
+- `index.ts` is now a pure export hub (`solveSchedule` + types); the
+  self-check runner moved to `main.ts`.
 
 ---
 

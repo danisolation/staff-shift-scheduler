@@ -421,8 +421,10 @@ exists to present things.
    becomes the contracted `{ statusCode, message, details }` envelope.
 6. `packages/contracts/src/index.ts` — the single source of truth for API
    shapes, with a comment per schema.
-7. `apps/optimizer/src/solver.ts` — a tiny LP model with its hand-computed
-   answer; the seed of the real scheduling model.
+7. `apps/optimizer/src/schedule-model.ts` and `solve-schedule.ts` — the
+   scheduling model itself: pure model builder (variables, constraints,
+   fairness linearization, LP text) and the orchestrator that runs HiGHS
+   and maps results. `docs/OPTIMIZATION.md` walks through it line by line.
 8. `docs/MONOREPO_BASICS.md` — if you haven't read it, the repo mechanics
    live there. `docs/DATABASE.md` is the equivalent handbook for everything
    PostgreSQL/Prisma.
@@ -472,6 +474,25 @@ exists to present things.
   `config/env.schema.ts` is the only place env is interpreted; a missing
   `DATABASE_URL` now fails startup with a readable message instead of a
   cryptic Prisma error later.
+
+## What I learned — Milestone 3 (optimization core)
+
+(The full narrative lives in `docs/OPTIMIZATION.md`; these are the highlights.)
+
+- **The objective you expect may be mathematically inert.** With exact
+  headcount coverage, "minimize assigned minutes" is a constant — the
+  fairness variable is what actually chooses between schedules. The model
+  documents this honestly instead of pretending the cost term decides.
+- **Fairness had to be linearized.** "Balanced weekend load" became
+  "minimize the maximum weekend count" via one auxiliary variable and one
+  row per employee — the standard, fully-linear trick.
+- **Pruning beats constraining.** Illegal employee–shift pairs never
+  become variables; the rules are enforced by construction and the LP
+  stays small.
+- **Solver quirks live in exactly one file.** `highs-solver.ts` is the
+  only code that knows HiGHS's string API, seconds-not-milliseconds time
+  limits, and status strings — and unknown statuses throw rather than
+  masquerade as schedules.
 
 ## What I learned
 

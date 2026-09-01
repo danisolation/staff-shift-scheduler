@@ -73,8 +73,10 @@ The web app submits a scheduling problem to the api, which returns a **job id** 
 ## Documentation
 
 - [docs/ROADMAP.md](docs/ROADMAP.md) — the live progress tracker: what's done, what's in progress, and each milestone's acceptance criteria. **Read this first to see where the project stands.**
+- [docs/MILESTONE-REPORTS.md](docs/MILESTONE-REPORTS.md) — one report per completed milestone answering what, when, and why — the story of each milestone in one place
 - [docs/CONCEPT.md](docs/CONCEPT.md) — the narrative overview: what problem this solves, how optimization works, and the full implementation plan
 - [docs/DATABASE.md](docs/DATABASE.md) — the teaching guide and setup handbook for the database layer: what a database is, Docker, Prisma, and migrations, explained from scratch — plus the line-by-line tour of our actual setup
+- [docs/OPTIMIZATION.md](docs/OPTIMIZATION.md) — how the scheduler actually thinks: what a MIP model is, our variables/constraints/objective line by line, and how infeasibility gets explained
 - [docs/MONOREPO_BASICS.md](docs/MONOREPO_BASICS.md) — the guided tour: what a monorepo is, how pnpm workspaces and Turborepo work, every config file explained, and the daily workflow. Read this if the repo mechanics are new to you.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — how the three services fit together and why: REST, controllers/services/repositories, the request lifecycle, and how a solve actually works
 - [docs/adr/](docs/adr/) — architecture decision records
