@@ -50,7 +50,9 @@ describe('Prisma repositories (integration)', () => {
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    // Guarded: if beforeAll failed (database down, URL missing), prisma was
+    // never assigned and teardown must not crash on top of the real error.
+    await prisma?.$disconnect();
   });
 
   describe('skills', () => {

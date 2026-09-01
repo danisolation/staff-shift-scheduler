@@ -1,5 +1,12 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  // Turbo 2 runs tasks in "strict env mode": only variables declared here
+  // (plus a small built-in allowlist) reach task processes. The api's
+  // integration tests read these two — without declaring them, CI strips
+  // them and the tests cannot find the test database. Declaring them also
+  // includes them in cache hashes, which is correct: test results depend
+  // on which database they run against.
+  "globalEnv": ["TEST_DATABASE_URL", "DATABASE_URL"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
