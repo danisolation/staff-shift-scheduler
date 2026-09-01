@@ -17,7 +17,7 @@ Status legend:
 
 ## Current state
 
-**Milestone 4 is complete; Milestone 5 is next.** Everything above it is
+**Milestone 5 is complete; Milestone 6 is next.** Everything above it is
 blocked until it is finished.
 
 - `[x]` Scaffold — monorepo, docs, CI, initial push. Verified: lint,
@@ -31,7 +31,8 @@ blocked until it is finished.
   Verified 2026-09-01: all acceptance criteria hold (see below).
 - `[x]` **Milestone 4 — Orchestration (async solve job)**
   Verified 2026-09-01: all acceptance criteria hold (see below).
-- `[ ]` Milestone 5 — Frontend integration (forms, calendar, polling)
+- `[x]` **Milestone 5 — Frontend integration (forms, calendar, polling)**
+  Verified 2026-09-01: all acceptance criteria hold (see below).
 - `[ ]` Milestone 6 — Hardening (auth, E2E, containers, polish)
 
 ## How to update this file
@@ -242,6 +243,25 @@ polling eventually reports `optimal` with an assignment result.
 skills → create shifts → solve → calendar renders; `pnpm test` green.
 
 **Docs:** README feature list; "What I learned".
+
+---
+
+**Verified 2026-09-01:**
+- Lint, typecheck, test, build green across all packages (web 23 tests,
+  api 66, optimizer 26).
+- Full live journey: with optimizer + api + web dev server running, a
+  skill, employee, and Saturday shift were created via the API, a solve
+  accepted in **16 ms** (`queued` + jobId), polling reported `optimal`
+  with objective 241 and the expected assignment, and the Vite `/api`
+  proxy plus the SPA's `/schedule` route were verified serving.
+- Every response the UI renders is zod-validated at the boundary
+  (`lib/api-client.ts`); all time display comes from `lib/time.ts` only
+  (its loud RangeError caught a real units bug during the milestone).
+- Component tests cover form validation + contract-shaped payloads for
+  employees/shifts, and the schedule page's infeasible/failed/polling
+  views — hermetic, no mock server (fetch stubbed per test).
+- `docs/FRONTEND.md` added; README/ARCHITECTURE pointers updated; report
+  appended to `docs/MILESTONE-REPORTS.md`.
 
 ---
 

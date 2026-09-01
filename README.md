@@ -79,5 +79,6 @@ The web app submits a scheduling problem to the api, which returns a **job id** 
 - [docs/OPTIMIZATION.md](docs/OPTIMIZATION.md) — how the scheduler actually thinks: what a MIP model is, our variables/constraints/objective line by line, and how infeasibility gets explained
 - [docs/MONOREPO_BASICS.md](docs/MONOREPO_BASICS.md) — the guided tour: what a monorepo is, how pnpm workspaces and Turborepo work, every config file explained, and the daily workflow. Read this if the repo mechanics are new to you.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — how the three services fit together and why: REST, controllers/services/repositories, the request lifecycle, and how a solve actually works
+- [docs/FRONTEND.md](docs/FRONTEND.md) — the teaching guide for the web layer: server state vs UI state, TanStack Query polling, shadcn/ui, and contract-validated forms
 - [docs/adr/](docs/adr/) — architecture decision records
 - [AGENTS.md](AGENTS.md) — the rulebook every AI agent must follow in this repo

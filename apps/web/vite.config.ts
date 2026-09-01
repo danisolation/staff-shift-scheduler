@@ -25,5 +25,10 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
     globals: true,
+    // Pin NODE_ENV for tests: React 19.2 removed `act` from its production
+    // build, so an ambient NODE_ENV=production (some shells/CI machines
+    // have it) would break every component test. Vitest only defaults
+    // NODE_ENV to "test" when it is not already set.
+    env: { NODE_ENV: 'test' },
   },
 });

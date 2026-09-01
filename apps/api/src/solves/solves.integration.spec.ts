@@ -51,7 +51,8 @@ describe('solve jobs (integration)', () => {
       .compile();
 
     service = moduleRef.get(SolvesService);
-  });
+    // Same retry-window allowance as the other integration suite.
+  }, 15000);
 
   /** What the stub optimizer answers — changed per test. */
   let optimizersAnswer: SolveResult;

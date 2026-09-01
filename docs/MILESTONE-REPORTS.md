@@ -359,4 +359,111 @@ the milestone's story without re-reading every diff.
   project's container on this machine. Ports are a shared machine
   resource — adapt our own config, never touch another project's process.
 
+---
+
+## Milestone 5 — Frontend integration: forms, calendar, polling
+
+### What
+
+**Foundation (apps/web)**
+
+- shadcn/ui initialized (the 2025 CLI with the radix/nova style) into
+  `src/ui/`: button, input, label, select, field, card, badge, skeleton,
+  table + separator. Tailwind v4 theme tokens completed by the init
+  (oklch neutral palette, dark block, Geist font). The unified `radix-ui`
+  package and the CLI's own Tailwind runtime (`shadcn` package) are the
+  two new runtime deps; sonner/next-themes were installed by the CLI and
+  deliberately removed (a Next.js theme hook has no place in this Vite
+  app; inline `role="alert"` errors are clearer). ESLint got the
+  canonical shadcn override (`react-refresh/only-export-components` off
+  for `src/ui`).
+- `lib/api-client.ts` — `apiFetch(path, schema, init)`: the single UI↔api
+  boundary; non-2xx becomes an `ApiError` built from the api's error
+  envelope, every success response is zod-parsed against the shared
+  contracts. `use-health` migrated to it.
+- `lib/time.ts` + 9 tests — the single shared time utility (day names,
+  minute-of-day formatting, "HH:MM" parsing, shift-window labels, weekly
+  hours), throwing loudly on impossible inputs.
+- `lib/test-utils.tsx` — `renderWithProviders` (fresh QueryClient without
+  retries + MemoryRouter); Radix jsdom stubs in `vitest.setup.ts`;
+  `NODE_ENV: 'test'` pinned in the Vitest config (React 19.2 dropped
+  `act` from its production build — an ambient production NODE_ENV broke
+  every component test).
+
+**Features**
+
+- `features/skills/` — list + create form + page + test (the roadmap
+  names employees/shifts/schedule, but the journey starts with skills).
+- `features/employees/` — list + create form (skill checkboxes, dynamic
+  availability windows with day Select + time inputs, weekly hours input)
+  + page + 3 tests; "08:00" becomes `startMinute: 480` via `lib/time.ts`
+  and is re-validated by `employeeCreateSchema.parse` before submit.
+- `features/shifts/` — list + create form (day Select, time inputs,
+  required-skill checkboxes, headcount) + page + 2 tests with the same
+  conversion-and-parse pattern.
+- `features/schedule/` — `useSolveMutation` (POST /api/solves),
+  `useSolveJob` (polls every second while queued/running, stops when
+  terminal), a Zustand store persisting only `activeJobId` to
+  sessionStorage, and `SchedulePage` with views for every lifecycle
+  state: no-job hint, queued/running skeletons with status badge,
+  `optimal`/`feasible` (calendar + objective score), `infeasible` (red
+  card listing every conflict), `failed` (message + retry).
+  `ScheduleCalendar` renders employees × Monday–Sunday with shift chips.
+- Routing: `/skills`, `/employees`, `/shifts`, `/schedule` + active-state
+  nav in `App.tsx`.
+- 23 web tests total (time utility, three form/list journeys, and five
+  schedule-page state tests) — all hermetic, fetch stubbed per test, no
+  mock-server dependency.
+
+### When
+
+- **Completed 2026-09-01**, in a single working session, immediately after
+  Milestone 4 (same day). Sequence: shadcn base → api client + test utils
+  → time utility → skills → employees → shifts → schedule plumbing →
+  schedule page + calendar → gate → live journey → docs.
+- Notable timing facts: the live journey accepted a solve in **16 ms**
+  and polled to `optimal` with objective 241 (the hand-computed value for
+  a Saturday shift), with the Vite `/api` proxy verified end to end.
+  Docker Desktop was found shut down when the integration suites' hooks
+  timed out — resolved by starting it and giving the two integration
+  `beforeAll` hooks explicit 15s timeouts so the retry message can
+  surface instead of a hook-timeout wall.
+
+### Why
+
+- **Why the shadcn CLI (and the field/sonner divergence):** the canonical
+  workflow teaches the real toolchain. The 2025 registry renamed `form`
+  to `field`-style composition; this repo's forms use plain Label/Input
+  with inline alerts — simpler to read, test, and explain. sonner (and
+  its Next.js-only `next-themes` dependency) was removed as scope the UI
+  didn't need.
+- **Why `src/ui/` not `src/components/ui/`:** AGENTS.md's frontend section
+  names `ui/` as the home of presentational components; `components.json`
+  aliases were updated so future CLI adds land in the same place.
+- **Why a shared `apiFetch`:** with ~8 endpoints, the dashboard's inline
+  fetch+parse would repeat eight times; one boundary keeps the
+  "every response is contract-validated" rule true by construction, and
+  error envelopes surface with the api's own message.
+- **Why forms speak "HH:MM" but the contract speaks minutes:** `<input
+  type="time">` produces strings; the widget's unit must not leak into
+  the domain. The conversion happens in one place (`lib/time.ts`), and
+  the shared create schema re-parses the mapped object — the contract
+  stays the boundary on both sides of the request.
+- **Why Zustand only for `activeJobId`:** it is the only state whose
+  owner is the UI. Persisting it to sessionStorage means a refresh during
+  a running solve resumes polling instead of orphaning the job view.
+- **Why polling via `refetchInterval` reading `query.state.data`:** the
+  interval is a *function* of the current status — 1s while
+  queued/running, stopping at terminal — the whole lifecycle in one hook,
+  no effect wiring, no stale timers.
+- **Why the infeasible view is a first-class screen:** the solver's
+  conflict explanations (Milestone 3) are the product's differentiator;
+  burying them in a generic error would waste them. The red card lists
+  each reason verbatim.
+- **Why the time utility throws:** display code with wrong units produces
+  plausible garbage ("40:00" for a 40-hour cap). A loud RangeError during
+  the milestone did exactly its job — it caught the bug at the only place
+  it could exist.
+
+
 

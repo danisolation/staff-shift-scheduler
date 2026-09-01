@@ -31,7 +31,6 @@ describe('Prisma repositories (integration)', () => {
     // completely unaware of which database they talk to.
     prisma = new PrismaService({ datasourceUrl: getTestDatabaseUrl() });
     await connectWithRetry(prisma);
-
     const moduleRef = await Test.createTestingModule({
       imports: [PrismaModule],
       providers: [PrismaSkillRepository, PrismaEmployeeRepository, PrismaShiftRepository],
@@ -43,7 +42,9 @@ describe('Prisma repositories (integration)', () => {
     skills = moduleRef.get(PrismaSkillRepository);
     employees = moduleRef.get(PrismaEmployeeRepository);
     shifts = moduleRef.get(PrismaShiftRepository);
-  });
+    // The connect retry window (up to ~10s while Postgres boots) exceeds
+    // Jest's default 5s hook timeout.
+  }, 15000);
 
   beforeEach(async () => {
     await resetDatabase(prisma);

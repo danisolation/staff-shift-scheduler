@@ -429,9 +429,11 @@ exists to present things.
    api side — the job lifecycle (`solves.service.ts`), the typed
    `OptimizerClient` boundary, and `docs/adr/README.md` ADR-005 for why
    jobs run in-process.
-8. `docs/MONOREPO_BASICS.md` — if you haven't read it, the repo mechanics
-   live there. `docs/DATABASE.md` is the equivalent handbook for everything
-   PostgreSQL/Prisma.
+8. `apps/web/src/features/schedule/` — the web layer consuming all of it:
+   contract-validated forms, the Zustand store for the one piece of pure UI
+   state, and the polling hook that renders the solver's week.
+   `docs/FRONTEND.md` explains the state split; `docs/MONOREPO_BASICS.md`
+   covers repo mechanics and `docs/DATABASE.md` the database handbook.
 
 ## What I learned — Milestone 1 (backend CRUD)
 
@@ -516,6 +518,24 @@ exists to present things.
   integration suite exposed that Jest runs test files in parallel workers;
   one shared test database means files must not interleave — `maxWorkers:
   1` and a documented reason.
+
+## What I learned — Milestone 5 (frontend integration)
+
+(The full narrative lives in `docs/FRONTEND.md` and
+`docs/MILESTONE-REPORTS.md`.)
+
+- **State belongs where its owner is.** Server data lives in TanStack
+  Query (cached, invalidated, polled); the one piece of pure UI state —
+  which job the page is watching — lives in Zustand with sessionStorage;
+  form rules live in the shared zod contracts. The bugs were all
+  boundary bugs, and every boundary had a tool.
+- **The contract rule enforced itself twice.** The time utility threw on a
+  weekly cap passed to the clock-time formatter (2400 minutes is not
+  "40:00"), and the create schemas re-validated form output before it
+  left the page — the shared contracts caught the UI's own mistakes.
+- **Ambient environment is part of the test contract.** React 19.2 removed
+  `act` from its production build; a machine with `NODE_ENV=production`
+  silently broke every component test. Vitest now pins the environment.
 
 ## What I learned
 
