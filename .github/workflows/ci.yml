@@ -9,6 +9,31 @@ jobs:
   quality:
     name: Lint, typecheck, test, build
     runs-on: ubuntu-latest
+
+    # The api's integration tests run against a throwaway Postgres service
+    # container — the CI equivalent of docker compose's "test-db" service.
+    services:
+      test-db:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: scheduler
+          POSTGRES_PASSWORD: scheduler
+          POSTGRES_DB: scheduler_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U scheduler -d scheduler_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Integration tests connect to the service container above.
+      TEST_DATABASE_URL: postgresql://scheduler:scheduler@localhost:5433/scheduler_test?schema=public
+      # Constructing the Prisma client validates that DATABASE_URL exists,
+      # even when no test actually opens a connection (module-wiring test).
+      DATABASE_URL: postgresql://scheduler:scheduler@localhost:5433/scheduler_test?schema=public
+
     steps:
       - uses: actions/checkout@v4
 
@@ -27,6 +52,11 @@ jobs:
 
       - name: Typecheck
         run: pnpm typecheck
+
+      # Bring the test database to the committed schema state — the same
+      # command any fresh environment (or production) would run.
+      - name: Apply database migrations (test database)
+        run: pnpm --filter @scheduler/api db:migrate:deploy
 
       - name: Test
         run: pnpm test

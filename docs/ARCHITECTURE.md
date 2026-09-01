@@ -406,18 +406,26 @@ exists to present things.
 ## 9. Where to look next
 
 1. `apps/api/src/skills/` — the smallest full feature: repository (storage
-   contract + in-memory implementation), service (business rules), controller
-   (thin HTTP), module (wiring). Read in that order.
+   contract + in-memory double used by unit tests), service (business
+   rules), controller (thin HTTP), module (wiring). Read in that order.
 2. `apps/api/src/employees/` and `apps/api/src/shifts/` — the same pattern
    with a cross-resource rule: they check referenced skills exist.
-3. `apps/api/src/common/filters/http-exception.filter.ts` — how every error
+3. `apps/api/src/prisma/` — the PostgreSQL side of the storage contract:
+   `prisma.service.ts` (the shared client), the `prisma-*.repository.ts`
+   implementations behind the same tokens, and `mappers.ts` (database rows
+   → contract shapes). `skills/skill.repository.ts` shows how the modules
+   swap implementations with one `useClass` line.
+4. `apps/api/src/config/env.schema.ts` — the single place environment
+   variables are declared and validated (zod), feeding `ConfigService`.
+5. `apps/api/src/common/filters/http-exception.filter.ts` — how every error
    becomes the contracted `{ statusCode, message, details }` envelope.
-4. `packages/contracts/src/index.ts` — the single source of truth for API
+6. `packages/contracts/src/index.ts` — the single source of truth for API
    shapes, with a comment per schema.
-5. `apps/optimizer/src/solver.ts` — a tiny LP model with its hand-computed
+7. `apps/optimizer/src/solver.ts` — a tiny LP model with its hand-computed
    answer; the seed of the real scheduling model.
-6. `docs/MONOREPO_BASICS.md` — if you haven't read it, the repo mechanics
-   live there.
+8. `docs/MONOREPO_BASICS.md` — if you haven't read it, the repo mechanics
+   live there. `docs/DATABASE.md` is the equivalent handbook for everything
+   PostgreSQL/Prisma.
 
 ## What I learned — Milestone 1 (backend CRUD)
 
@@ -445,6 +453,25 @@ exists to present things.
   field-by-field, but the *merged* result can still be invalid (moving
   startMinute past endMinute). The service re-validates the merged entity
   against the full contract before storing.
+
+## What I learned — Milestone 2 (database)
+
+(The full narrative lives in `docs/DATABASE.md`; these are the highlights.)
+
+- **The layering earned its keep.** Swapping in-memory `Map` storage for
+  PostgreSQL changed exactly one provider line per module
+  (`useClass: InMemory...Repository` → `useClass: Prisma...Repository`)
+  plus the new files under `src/prisma/`. Controllers, services, and the
+  HTTP contract did not change at all.
+- **The database enforces rules code cannot forget.** Referential
+  integrity (every `skillId` must exist) was a hand-written service check;
+  now foreign keys guarantee it for every code path forever. The same swap
+  surfaced a latent bug: deleting a referenced skill used to silently leave
+  dangling references — the database refuses, and that became a proper 409.
+- **Env vars are validated once, at boot.** The zod schema in
+  `config/env.schema.ts` is the only place env is interpreted; a missing
+  `DATABASE_URL` now fails startup with a readable message instead of a
+  cryptic Prisma error later.
 
 ## What I learned
 

@@ -1,0 +1,48 @@
+# Development databases for the Staff Shift Scheduler.
+#
+# Two separate Postgres instances:
+# - db       the dev database the api connects to (data survives restarts
+#            thanks to the named volume).
+# - test-db  the database integration tests run against (no volume: its data
+#            is disposable by design, and it can never touch dev data).
+#
+# The api talks to these over localhost ports 5434 / 5433 using the
+# connection strings in apps/api/.env (see apps/api/.env.example).
+# Host port 5434 (not the Postgres default 5432) on purpose: 5432 is
+# frequently taken by other local Postgres installs or containers.
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: scheduler-db
+    environment:
+      POSTGRES_USER: scheduler
+      POSTGRES_PASSWORD: scheduler
+      POSTGRES_DB: scheduler
+    ports:
+      - "5434:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scheduler -d scheduler"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  test-db:
+    image: postgres:16-alpine
+    container_name: scheduler-test-db
+    environment:
+      POSTGRES_USER: scheduler
+      POSTGRES_PASSWORD: scheduler
+      POSTGRES_DB: scheduler_test
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scheduler -d scheduler_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db-data:

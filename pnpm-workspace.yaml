@@ -5,5 +5,14 @@ packages:
 allowBuilds:
   # esbuild's postinstall downloads its native binary — required.
   esbuild: true
+  # @prisma/client's postinstall generates the typed Prisma client from
+  # apps/api/prisma/schema.prisma — required for the api to compile.
+  '@prisma/client': true
+  # @prisma/engines downloads the query engine binary Prisma needs to talk
+  # to PostgreSQL — required.
+  '@prisma/engines': true
   # @scarf/scarf is install telemetry, not functionality — denied.
   '@scarf/scarf': false
+  # prisma (the CLI) downloads the engine binaries used by migrations —
+  # required.
+  prisma: true

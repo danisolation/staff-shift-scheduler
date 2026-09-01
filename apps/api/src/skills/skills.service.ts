@@ -1,6 +1,7 @@
 import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { Skill, SkillCreateInput, SkillUpdateInput } from '@scheduler/contracts';
-import { SKILL_REPOSITORY, SkillRepository } from './skill.repository';
+import { SKILL_REPOSITORY, SkillInUseError } from './skill.repository';
+import type { SkillRepository } from './skill.repository';
 
 /**
  * Skills have exactly one business rule beyond CRUD: names are unique
@@ -52,6 +53,16 @@ export class SkillsService {
 
   async delete(id: string): Promise<void> {
     await this.findById(id);
-    await this.repository.delete(id);
+    try {
+      await this.repository.delete(id);
+    } catch (error) {
+      // The storage refuses to delete a skill that employees or shifts still
+      // reference (foreign keys in PostgreSQL). The user gets a 409 with a
+      // message explaining what to remove first.
+      if (error instanceof SkillInUseError) {
+        throw new ConflictException(error.message);
+      }
+      throw error;
+    }
   }
 }

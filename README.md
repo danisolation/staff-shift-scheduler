@@ -35,19 +35,24 @@ docs/         ARCHITECTURE.md, ADRs
 
 ## Getting started
 
-Requirements: Node.js 22+ and pnpm 9+.
+Requirements: Node.js 22+, pnpm 9+, and Docker Desktop (it runs the PostgreSQL databases).
 
 ```bash
-pnpm install      # install everything (one command for the whole monorepo)
-pnpm dev          # run web + api + optimizer together
+docker compose up -d                               # 1. start dev + test databases
+pnpm install                                       # 2. install (generates the Prisma client)
+pnpm --filter @scheduler/api db:migrate            # 3. create the schema in the dev database
+pnpm dev                                           # 4. run web + api + optimizer together
 ```
 
 - Web app: http://localhost:5173
 - API: http://localhost:3000/api
 - API health check: http://localhost:3000/api/health
+- Databases: two Postgres 16 containers (dev on host port 5434, tests on 5433 — see [docker-compose.yml](docker-compose.yml) and [docs/DATABASE.md](docs/DATABASE.md))
 
 > In dev, the Vite server proxies `/api` requests to the NestJS api, so the
 > browser only ever talks to one origin and CORS never gets in the way.
+> `pnpm test` includes integration tests that need the test database up
+> (step 1); they fail with instructions if it is not running.
 
 ## Quality commands
 
@@ -69,7 +74,7 @@ The web app submits a scheduling problem to the api, which returns a **job id** 
 
 - [docs/ROADMAP.md](docs/ROADMAP.md) — the live progress tracker: what's done, what's in progress, and each milestone's acceptance criteria. **Read this first to see where the project stands.**
 - [docs/CONCEPT.md](docs/CONCEPT.md) — the narrative overview: what problem this solves, how optimization works, and the full implementation plan
-- [docs/DATABASE.md](docs/DATABASE.md) — the teaching guide for Milestone 2: what a database is, Docker, Prisma, and migrations, explained from scratch
+- [docs/DATABASE.md](docs/DATABASE.md) — the teaching guide and setup handbook for the database layer: what a database is, Docker, Prisma, and migrations, explained from scratch — plus the line-by-line tour of our actual setup
 - [docs/MONOREPO_BASICS.md](docs/MONOREPO_BASICS.md) — the guided tour: what a monorepo is, how pnpm workspaces and Turborepo work, every config file explained, and the daily workflow. Read this if the repo mechanics are new to you.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — how the three services fit together and why: REST, controllers/services/repositories, the request lifecycle, and how a solve actually works
 - [docs/adr/](docs/adr/) — architecture decision records

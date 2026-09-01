@@ -1,0 +1,122 @@
+// Prisma schema for the scheduler's persistent data. This file is the single
+// source of truth for the database structure: edit it, generate a migration
+// (`pnpm --filter @scheduler/api db:migrate`), and commit the migration
+// files. See docs/DATABASE.md for the plain-language explanation.
+//
+// Modeling notes:
+// - Time stays minutes-since-week-start, exactly like the API contracts in
+//   packages/contracts: `day` 0-6 (0 = Monday) plus startMinute/endMinute
+//   within that day. Converting to human-readable times happens only in the
+//   frontend.
+// - The API exposes employees with `skillIds: string[]` and shifts with
+//   `requiredSkillIds: string[]`. In a relational database those arrays
+//   become join tables (EmployeeSkill / ShiftSkill) so the database can
+//   guarantee every referenced skill exists. The repositories map between
+//   the two shapes — the API surface never changes.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Skill {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  employees EmployeeSkill[]
+  shifts    ShiftSkill[]
+
+  // Skill names are unique case-insensitively (a domain rule the service
+  // also checks for a friendly 409). The exact-case @unique above is one
+  // backstop; the stronger lower(name) unique index is added by hand in the
+  // initial migration.
+}
+
+model Employee {
+  id                 String   @id @default(uuid())
+  name               String
+  contractMaxMinutes Int
+  createdAt          DateTime @default(now())
+
+  skills       EmployeeSkill[]
+  availability AvailabilityWindow[]
+}
+
+// One row = one window on one weekday ("Monday 08:00-12:00" is
+// day 0, startMinute 480, endMinute 720). Belongs to exactly one employee
+// and dies with them (onDelete: Cascade).
+model AvailabilityWindow {
+  id          String @id @default(uuid())
+  day         Int
+  startMinute Int
+  endMinute   Int
+
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+}
+
+// Join table: one row = "this employee has this skill". The composite
+// primary key (@@id) prevents the same pair twice. skillId has no
+// onDelete: Cascade on purpose: the default (Restrict) makes the database
+// refuse to delete a skill that any employee still references.
+model EmployeeSkill {
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  skillId    String
+  skill      Skill    @relation(fields: [skillId], references: [id])
+
+  @@id([employeeId, skillId])
+  @@index([skillId])
+}
+
+model Shift {
+  id          String   @id @default(uuid())
+  day         Int
+  startMinute Int
+  endMinute   Int
+  headcount   Int
+  createdAt   DateTime @default(now())
+
+  requiredSkills ShiftSkill[]
+}
+
+// Join table: one row = "this shift requires this skill". Same Restrict
+// reasoning as EmployeeSkill: referenced skills cannot be deleted while a
+// shift still needs them.
+model ShiftSkill {
+  shiftId String
+  shift   Shift   @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  skillId String
+  skill   Skill   @relation(fields: [skillId], references: [id])
+
+  @@id([shiftId, skillId])
+  @@index([skillId])
+}
+
+// Prepared for Milestone 4 (the async solve job): the api will create a row
+// with status "queued" and update it as the optimizer runs. No code uses it
+// yet — the table exists so the first migration already has the full shape.
+model SolveJob {
+  id        String         @id @default(uuid())
+  status    SolveJobStatus @default(queued)
+  message   String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+// Mirrors solveJobSchema in packages/contracts.
+enum SolveJobStatus {
+  queued
+  running
+  optimal
+  feasible
+  infeasible
+  failed
+}

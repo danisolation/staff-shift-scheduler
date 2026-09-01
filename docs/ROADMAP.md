@@ -17,7 +17,7 @@ Status legend:
 
 ## Current state
 
-**Milestone 1 is complete; Milestone 2 is next.** Everything above it is
+**Milestone 2 is complete; Milestone 3 is next.** Everything above it is
 blocked until it is finished.
 
 - `[x]` Scaffold — monorepo, docs, CI, initial push. Verified: lint,
@@ -25,7 +25,8 @@ blocked until it is finished.
   working end to end.
 - `[x]` **Milestone 1 — Backend foundation (CRUD for employees, skills, shifts)**
   Verified 2026-08-31: all acceptance criteria hold (see below).
-- `[ ]` **Milestone 2 — Database (PostgreSQL, Prisma, migrations)**
+- `[x]` **Milestone 2 — Database (PostgreSQL, Prisma, migrations)**
+  Verified 2026-09-01: all acceptance criteria hold (see below).
 - `[ ]` Milestone 3 — Optimization core (the scheduling model)
 - `[ ]` Milestone 4 — Orchestration (async solve job)
 - `[ ]` Milestone 5 — Frontend integration (forms, calendar, polling)
@@ -103,6 +104,28 @@ includes integration tests; migrations committed.
 
 **Docs:** `docs/DATABASE.md` (what a database is, what a migration is, how
 Prisma generates the client); "What I learned".
+
+---
+
+**Verified 2026-09-01:**
+- Lint, typecheck, test (57 api tests: 41 existing unit tests + 16 new),
+  build all green.
+- `docker-compose.yml` runs two Postgres 16 containers (dev on host port
+  5434 — 5432 was taken by another project's container; test on 5433).
+- First migration committed (incl. a hand-added case-insensitive unique
+  index on skill names); applied to dev (migrate dev) and test
+  (migrate deploy) databases.
+- Live smoke test: skills/employees/shifts created via the API, the server
+  restarted, and every entity returned with identical data — persistence
+  proven. Error paths re-verified live: 400 invalid bodies, 409 duplicate
+  skill names, 400 unknown skill references, 400 on merged-shift PATCH
+  violations, 404s — and the new 409 when deleting a referenced skill
+  (foreign keys refuse; the old behavior silently left dangling ids).
+- Prisma repositories implement the existing interfaces; controllers and
+  services unchanged. Env validated once at boot via a typed zod
+  `ConfigModule`; the last scattered `process.env` in `src/` is gone.
+- CI updated: Postgres service container + `migrate deploy` step so the
+  integration tests run on every PR.
 
 ---
 

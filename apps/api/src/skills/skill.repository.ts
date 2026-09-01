@@ -10,16 +10,40 @@ export const SKILL_REPOSITORY = Symbol('SkillRepository');
 
 /**
  * The storage contract for skills. Services depend on this interface, never
- * on a concrete class — so Milestone 2 can swap this in-memory map for a
- * PostgreSQL-backed implementation without touching services or controllers.
+ * on a concrete class — so Milestone 2 could swap this in-memory map for a
+ * PostgreSQL-backed implementation without touching services or controllers
+ * (which is exactly what happened).
  */
 export interface SkillRepository {
   findAll(): Promise<Skill[]>;
   findById(id: string): Promise<Skill | null>;
   create(input: SkillCreateInput): Promise<Skill>;
   update(id: string, patch: SkillUpdateInput): Promise<Skill | null>;
+  /**
+   * Removes the skill. Returns false when the id does not exist.
+   *
+   * Contract: implementations MUST throw {@link SkillInUseError} when the
+   * skill is still referenced by employees or shifts — dangling references
+   * would silently corrupt solver input. The PostgreSQL implementation gets
+   * this for free from its foreign keys (ON DELETE RESTRICT). The in-memory
+   * class cannot honor it (a skill Map has no knowledge of employees or
+   * shifts), which is precisely the kind of guarantee real storage adds.
+   */
   delete(id: string): Promise<boolean>;
   existsByName(name: string): Promise<boolean>;
+}
+
+/**
+ * Thrown by {@link SkillRepository.delete} when the skill is still referenced
+ * by employees or shifts. SkillsService maps this to an HTTP 409 Conflict —
+ * the rule's enforcement lives in the storage, but the decision of *what the
+ * user sees* belongs to the domain layer.
+ */
+export class SkillInUseError extends Error {
+  constructor(skillId: string) {
+    super(`Skill ${skillId} is still referenced by employees or shifts and cannot be deleted`);
+    this.name = 'SkillInUseError';
+  }
 }
 
 /**
