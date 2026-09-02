@@ -6,7 +6,7 @@
   // them and the tests cannot find the test database. Declaring them also
   // includes them in cache hashes, which is correct: test results depend
   // on which database they run against.
-  "globalEnv": ["TEST_DATABASE_URL", "DATABASE_URL", "OPTIMIZER_BASE_URL"],
+  "globalEnv": ["TEST_DATABASE_URL", "DATABASE_URL", "OPTIMIZER_BASE_URL", "JWT_SECRET"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

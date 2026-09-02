@@ -465,5 +465,114 @@ the milestone's story without re-reading every diff.
   the milestone did exactly its job — it caught the bug at the only place
   it could exist.
 
+---
+
+## Milestone 6 — Hardening: auth, E2E, containers, polish
+
+### What
+
+**Authentication (apps/api)**
+
+- `packages/contracts`: `registerSchema`, `loginSchema`, `authResponseSchema`
+  added to the shared contracts.
+- `apps/api/prisma/schema.prisma`: `User` model (id, email unique,
+  passwordHash, name, createdAt). Migration `20260902130654_add_user`
+  committed and applied.
+- `apps/api/src/auth/` module:
+  - `AuthService` — register (bcrypt hash, 10 rounds) and login (verify
+    credentials). Returns JWT + user object.
+  - `AuthController` — `POST /api/auth/register`, `POST /api/auth/login`
+    (both `@Public()`).
+  - `JwtStrategy` — extracts Bearer token from Authorization header,
+    verifies with JWT_SECRET, attaches user to request.
+  - `JwtAuthGuard` — global guard via `APP_GUARD`; skips `@Public()` routes.
+  - `Public` decorator — marks routes as public.
+- All GET endpoints marked `@Public()` (skills, employees, shifts, solves,
+  health). All write endpoints (POST, PATCH, DELETE) require JWT.
+- `env.schema.ts` updated with `JWT_SECRET` (min 32 chars).
+- `.env.example`, `.env`, `turbo.json`, `docker-compose.yml` updated.
+- Swagger config updated with `.addBearerAuth()`.
+- Dependencies: `@nestjs/jwt`, `@nestjs/passport`, `passport`,
+  `passport-jwt`, `bcryptjs`, `@types/passport-jwt`, `@types/bcryptjs`.
+
+**Containers**
+
+- `apps/api/Dockerfile` — multi-stage build: build stage (pnpm install,
+  prisma generate, tsc) → production stage (production deps, prisma
+  migrate deploy at startup via entrypoint script).
+- `apps/optimizer/Dockerfile` — multi-stage build: build stage → production
+  stage with HiGHS WASM binaries.
+- `apps/web/Dockerfile` — multi-stage build: Vite build → nginx:alpine
+  serving the SPA.
+- `apps/web/nginx.conf` — SPA routing (try_files → index.html) + `/api`
+  proxy to api:3000.
+- `docker-compose.yml` — full stack: db, api, optimizer, web + test-db for
+  local development.
+- `.dockerignore` — excludes node_modules, dist, .git from build context.
+- `apps/api/docker-entrypoint.sh` — finds prisma binary in pnpm store,
+  runs migrations, starts API.
+- `packages/contracts/package.json` — added `"node"` export condition for
+  production ESM resolution.
+- `apps/optimizer/src/http-server.ts` — changed bind address from
+  `127.0.0.1` to `0.0.0.0` for Docker networking.
+- `apps/api/package.json` — moved `prisma` from devDependencies to
+  dependencies (needed for production migrations).
+
+**E2E Tests**
+
+- `playwright.config.ts` — Chromium browser, base URL localhost:5173,
+  auto-starts Vite dev server.
+- `e2e/schedule-journey.spec.ts` — 7 tests: register/login via API, view
+  skills/employees/shifts/schedule pages, create skill via UI, trigger
+  solve via API and verify result.
+- Root `package.json` — added `test:e2e` script.
+
+**Polish**
+
+- `apps/api/src/auth/auth.service.spec.ts` — 5 unit tests for auth service
+  (register, login, duplicate email, invalid credentials).
+- `apps/api/jest.config.json` — updated coverage config, added
+  `moduleNameMapper` for `@nestjs/jwt` mock.
+- API coverage: 82.63% statements (above 80% target).
+- `docs/DEPLOYMENT.md` — Docker deployment guide from scratch.
+- `docs/adr/006-auth-choice.md` — ADR for JWT + bcrypt choice.
+- `docs/ARCHITECTURE.md` — added auth and container sections.
+- `README.md` — updated with Docker quick start, auth instructions,
+  E2E test command.
+- `docs/ROADMAP.md` — Milestone 6 marked as complete.
+
+### When
+
+- **Completed 2026-09-02**, in a single working session, immediately after
+  Milestone 5 (previous day). Sequence: Dockerfiles → compose stack →
+  auth contracts → User model → auth module → controller updates →
+  Playwright setup → E2E tests → coverage improvements → documentation.
+- Notable timing facts: the Docker build exposed that Prisma's postinstall
+  needs the schema file (fixed by copying it early), and that the
+  contracts package's ESM exports pointed to TypeScript source (fixed by
+  adding a `"node"` condition). The optimizer's `127.0.0.1` bind address
+  prevented inter-container communication (fixed by changing to `0.0.0.0`).
+
+### Why
+
+- **Why JWT and not sessions:** JWT is stateless — no session store to
+  manage, no sticky sessions needed. For a single-instance API, this is
+  simpler. The tradeoff (can't revoke tokens before expiry) is acceptable
+  for a learning project.
+- **Why bcrypt and not argon2:** bcrypt's npm package is pure JS (no
+  native builds), avoiding platform-specific install issues. For a
+  learning project, bcrypt's security is more than sufficient.
+- **Why a global guard:** "secure by default". New endpoints are protected
+  automatically; forgetting `@Public()` on a read endpoint is a minor
+  inconvenience, not a security hole.
+- **Why multi-stage Docker builds:** keeps production images small (no
+  TypeScript compiler, no dev dependencies) while the build stage has
+  everything it needs.
+- **Why nginx for the web container:** nginx is the industry standard for
+  serving static files. It handles SPA routing (try_files → index.html)
+  and can proxy API requests, all with minimal configuration.
+- **Why Playwright for E2E:** it's the modern standard for browser
+  testing, with better debugging and cross-browser support than Cypress.
+  The critical journey test verifies the full stack works end-to-end.
 
 

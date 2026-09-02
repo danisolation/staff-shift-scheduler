@@ -32,6 +32,7 @@ import {
 import { validateWithZod } from '../common/zod/validate-with-zod';
 import { zodToOpenAPISchema } from '../common/openapi/zod-to-openapi';
 import { EmployeesService } from './employees.service';
+import { Public } from '../auth/public.decorator';
 
 /** Thin HTTP layer for /api/employees. No business logic here. */
 const requestBody = zodToOpenAPISchema(employeeCreateSchema);
@@ -44,6 +45,7 @@ const idParam = zodToOpenAPISchema(uuidParamSchema);
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'List all employees' })
   @ApiOkResponse({
@@ -65,6 +67,7 @@ export class EmployeesController {
     return employeeSchema.parse(await this.employeesService.create(input));
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get one employee by id' })
   @ApiParam({ name: 'id', schema: idParam })

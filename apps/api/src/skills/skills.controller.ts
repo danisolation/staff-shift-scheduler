@@ -33,6 +33,7 @@ import {
 import { validateWithZod } from '../common/zod/validate-with-zod';
 import { zodToOpenAPISchema } from '../common/openapi/zod-to-openapi';
 import { SkillsService } from './skills.service';
+import { Public } from '../auth/public.decorator';
 
 /**
  * Thin HTTP layer for /api/skills. The only job of a controller is
@@ -54,6 +55,7 @@ const idParam = zodToOpenAPISchema(uuidParamSchema);
 export class SkillsController {
   constructor(private readonly skillsService: SkillsService) {}
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'List all skills' })
   @ApiOkResponse({ description: 'All skills', schema: zodToOpenAPISchema(skillListSchema) })
@@ -74,6 +76,7 @@ export class SkillsController {
     return skillSchema.parse(skill);
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get one skill by id' })
   @ApiParam({ name: 'id', schema: idParam })

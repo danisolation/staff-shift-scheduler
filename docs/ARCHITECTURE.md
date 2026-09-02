@@ -500,6 +500,87 @@ exists to present things.
   limits, and status strings — and unknown statuses throw rather than
   masquerade as schedules.
 
+## Authentication (Milestone 6)
+
+The API uses **JWT (JSON Web Tokens)** for authentication. This is the
+most common auth pattern in REST APIs — here's how it works:
+
+### The flow
+
+```
+1. Register/Login ──▶ API returns a JWT token
+2. Client stores the token (in memory or localStorage)
+3. Every write request includes: Authorization: Bearer <token>
+4. API verifies the token's signature with a secret key
+5. If valid: request proceeds. If not: 401 Unauthorized.
+```
+
+### Why JWT?
+
+- **Stateless**: the server doesn't need to store sessions. The token
+  itself contains the user's identity (signed with a secret). This means
+  no session store (Redis, database) to manage.
+- **Standard**: JWT is the industry standard for REST API auth. Every
+  language and framework has JWT libraries.
+- **Portable**: the same token works from the web app, a mobile app, or
+  a CLI tool.
+
+### The global guard
+
+Every route is protected by default. The `JwtAuthGuard` is registered as
+a global guard via NestJS's `APP_GUARD` token. Routes that should be
+public (health checks, read endpoints, auth endpoints) are marked with
+the `@Public()` decorator.
+
+This is "secure by default" — forgetting `@Public()` on a read endpoint
+is a minor inconvenience; forgetting auth on a write endpoint is a
+security hole.
+
+### Password hashing
+
+Passwords are hashed with **bcrypt** (10 salt rounds). bcrypt is a
+one-way function: you can check if a password matches the hash, but you
+can't reverse the hash to get the password back. This means even if the
+database is compromised, attackers can't read the passwords.
+
+## Containers (Milestone 6)
+
+The entire stack runs in Docker containers, defined in `docker-compose.yml`:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  docker compose                                             │
+│                                                             │
+│  ┌─────────┐   ┌─────────┐   ┌───────────┐   ┌─────────┐  │
+│  │ web     │   │ api     │   │ optimizer │   │ db      │  │
+│  │ nginx   │──▶│ NestJS  │──▶│ HiGHS.js  │   │ Postgres│  │
+│  │ :80     │   │ :3000   │   │ :3002     │   │ :5432   │  │
+│  └─────────┘   └────┬────┘   └───────────┘   └─────────┘  │
+│                     │                                      │
+│                     └──────────────────────────────────────┘
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Why containers?
+
+- **Reproducibility**: "works on my machine" becomes "works on every
+  machine". The container includes the exact Node.js version, the exact
+  dependencies, and the exact configuration.
+- **Isolation**: each service runs in its own container with its own
+  filesystem. The API can't accidentally read the optimizer's files.
+- **One command**: `docker compose up --build` starts everything —
+  database, API, optimizer, web server — with one command.
+
+### Multi-stage builds
+
+Each Dockerfile uses **multi-stage builds**:
+1. **Build stage**: install all dependencies, compile TypeScript
+2. **Production stage**: copy only the compiled output and production
+   dependencies
+
+This keeps the production images small (no TypeScript compiler, no dev
+dependencies) while the build stage has everything it needs.
+
 ## What I learned — Milestone 4 (orchestration)
 
 (The full narrative lives in `docs/MILESTONE-REPORTS.md` and ADR-005.)

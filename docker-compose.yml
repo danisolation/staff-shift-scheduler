@@ -1,17 +1,20 @@
-# Development databases for the Staff Shift Scheduler.
+# Staff Shift Scheduler — full stack.
 #
-# Two separate Postgres instances:
-# - db       the dev database the api connects to (data survives restarts
-#            thanks to the named volume).
-# - test-db  the database integration tests run against (no volume: its data
-#            is disposable by design, and it can never touch dev data).
+# Run `docker compose up --build` to start everything:
+#   - db        PostgreSQL 16 (dev database, data persisted in a volume)
+#   - api       NestJS REST API (port 3000)
+#   - optimizer HiGHS.js model server (port 3002)
+#   - web       nginx serving the React SPA + proxying /api (port 80)
 #
-# The api talks to these over localhost ports 5434 / 5433 using the
-# connection strings in apps/api/.env (see apps/api/.env.example).
-# Host port 5434 (not the Postgres default 5432) on purpose: 5432 is
-# frequently taken by other local Postgres installs or containers.
+# The test-db service is NOT part of the production stack — it exists
+# only for local integration test runs (`docker compose up test-db`).
+#
+# Architecture:
+#   browser → web (nginx :80) → /api → api (NestJS :3000) → db (Postgres :5432)
+#                                api → optimizer (HiGHS :3002)
 
 services:
+  # ---------- Database (dev) ----------
   db:
     image: postgres:16-alpine
     container_name: scheduler-db
@@ -29,6 +32,47 @@ services:
       timeout: 5s
       retries: 10
 
+  # ---------- API (NestJS) ----------
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: scheduler-api
+    ports:
+      - "3000:3000"
+    environment:
+      # Inside the compose network, the database hostname is "db" (not localhost).
+      DATABASE_URL: "postgresql://scheduler:scheduler@db:5432/scheduler?schema=public"
+      PORT: "3000"
+      OPTIMIZER_BASE_URL: "http://optimizer:3002"
+      JWT_SECRET: "docker-jwt-secret-change-me-in-production-32chars!"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ---------- Optimizer (HiGHS.js) ----------
+  optimizer:
+    build:
+      context: .
+      dockerfile: apps/optimizer/Dockerfile
+    container_name: scheduler-optimizer
+    ports:
+      - "3002:3002"
+    environment:
+      OPTIMIZER_PORT: "3002"
+
+  # ---------- Web (nginx + React SPA) ----------
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: scheduler-web
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+
+  # ---------- Test database (not part of the production stack) ----------
   test-db:
     image: postgres:16-alpine
     container_name: scheduler-test-db

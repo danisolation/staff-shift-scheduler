@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { validateEnv } from './config/env.schema';
+import { AuthModule } from './auth/auth.module';
 import { EmployeesModule } from './employees/employees.module';
 import { HealthModule } from './health/health.module';
 import { ShiftsModule } from './shifts/shifts.module';
@@ -13,6 +14,7 @@ import { SolvesModule } from './solves/solves.module';
     // schema (see config/env.schema.ts). Everything else in the app reads
     // typed values from ConfigService — never process.env directly.
     ConfigModule.forRoot({ isGlobal: true, cache: true, validate: validateEnv }),
+    AuthModule,
     HealthModule,
     SkillsModule,
     EmployeesModule,

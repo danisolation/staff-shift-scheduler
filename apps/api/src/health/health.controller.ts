@@ -3,12 +3,14 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { healthResponseSchema, type HealthResponse } from '@scheduler/contracts';
 import { zodToOpenAPISchema } from '../common/openapi/zod-to-openapi';
 import { HealthService } from './health.service';
+import { Public } from '../auth/public.decorator';
 
 @ApiTags('Health')
 @Controller('health')
 export class HealthController {
   constructor(private readonly healthService: HealthService) {}
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'Check that the api is up' })
   @ApiOkResponse({

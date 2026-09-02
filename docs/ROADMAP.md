@@ -17,8 +17,8 @@ Status legend:
 
 ## Current state
 
-**Milestone 5 is complete; Milestone 6 is next.** Everything above it is
-blocked until it is finished.
+**All milestones are complete.** The project is ready for production
+deployment.
 
 - `[x]` Scaffold — monorepo, docs, CI, initial push. Verified: lint,
   typecheck, test, build green; health-check loop and HiGHS.js self-check
@@ -33,7 +33,8 @@ blocked until it is finished.
   Verified 2026-09-01: all acceptance criteria hold (see below).
 - `[x]` **Milestone 5 — Frontend integration (forms, calendar, polling)**
   Verified 2026-09-01: all acceptance criteria hold (see below).
-- `[ ]` Milestone 6 — Hardening (auth, E2E, containers, polish)
+- `[x]` **Milestone 6 — Hardening (auth, E2E, containers, polish)**
+  Verified 2026-09-02: all acceptance criteria hold (see below).
 
 ## How to update this file
 
@@ -282,6 +283,23 @@ skills → create shifts → solve → calendar renders; `pnpm test` green.
 works; CI green including E2E.
 
 **Docs:** `docs/DEPLOYMENT.md` (containers from scratch); "What I learned".
+
+**Verified 2026-09-02:**
+- Lint, typecheck, test, build green across all packages (api 71 tests,
+  optimizer 26, web 23).
+- `docker compose up --build` starts all 4 services (db, api, optimizer,
+  web); health checks pass; full journey works through Docker: create
+  skill → create employee → create shift → solve → optimal result.
+- Auth endpoints verified: register returns JWT, login returns JWT,
+  duplicate email → 409, invalid credentials → 401, write endpoints
+  without token → 401, read endpoints without token → 200, write
+  endpoints with valid token → 201.
+- Playwright E2E tests: 7 tests pass (register/login, view pages, create
+  skill via UI, trigger solve via API).
+- API coverage: 82.63% statements (above 80% target).
+- `docs/DEPLOYMENT.md` added; `docs/adr/006-auth-choice.md` added;
+  README updated with Docker quick start and auth instructions;
+  ARCHITECTURE.md updated with auth and container sections.
 
 ---
 

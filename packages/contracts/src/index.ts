@@ -214,3 +214,33 @@ export const solveJobSchema = z.object({
   result: solveResultSchema.optional(),
 });
 export type SolveJob = z.infer<typeof solveJobSchema>;
+
+// ---------------------------------------------------------------------------
+// Auth (Milestone 6)
+// ---------------------------------------------------------------------------
+
+/** Body of POST /api/auth/register. */
+export const registerSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8, 'password must be at least 8 characters'),
+  name: z.string().min(1),
+});
+export type RegisterInput = z.infer<typeof registerSchema>;
+
+/** Body of POST /api/auth/login. */
+export const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
+export type LoginInput = z.infer<typeof loginSchema>;
+
+/** Response from register/login: the JWT access token. */
+export const authResponseSchema = z.object({
+  accessToken: z.string(),
+  user: z.object({
+    id: z.string().uuid(),
+    email: z.string().email(),
+    name: z.string(),
+  }),
+});
+export type AuthResponse = z.infer<typeof authResponseSchema>;

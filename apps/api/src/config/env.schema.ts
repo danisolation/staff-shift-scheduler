@@ -19,6 +19,8 @@ export const envSchema = z.object({
   OPTIMIZER_BASE_URL: z.string().url(),
   /** HTTP port the api listens on. */
   PORT: z.coerce.number().int().positive().default(3000),
+  /** Secret key for signing JWT tokens. Must be at least 32 characters. */
+  JWT_SECRET: z.string().min(32),
 });
 
 export type Env = z.infer<typeof envSchema>;

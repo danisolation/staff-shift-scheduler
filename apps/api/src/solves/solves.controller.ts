@@ -18,6 +18,7 @@ import {
 import { validateWithZod } from '../common/zod/validate-with-zod';
 import { zodToOpenAPISchema } from '../common/openapi/zod-to-openapi';
 import { SolvesService } from './solves.service';
+import { Public } from '../auth/public.decorator';
 
 /**
  * Thin HTTP layer for /api/solves — the async job pattern (ADR-005).
@@ -47,6 +48,7 @@ export class SolvesController {
     return solveJobSchema.parse(await this.solvesService.create(input));
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Poll one solve job (queued → running → terminal status)' })
   @ApiParam({ name: 'id', schema: idParam })

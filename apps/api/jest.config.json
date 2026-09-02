@@ -1,5 +1,5 @@
 {
-  "collectCoverageFrom": ["src/**/*.ts", "!src/main.ts"],
+  "collectCoverageFrom": ["**/*.ts", "!main.ts", "!**/*.spec.ts", "!**/test/**"],
   "moduleFileExtensions": ["js", "json", "ts"],
   "rootDir": "src",
   "testRegex": ".*\\.spec\\.ts$",
@@ -7,6 +7,9 @@
   "maxWorkers": 1,
   "transform": {
     "^.+\\.(t|j)s$": ["ts-jest", {}]
+  },
+  "moduleNameMapper": {
+    "^@nestjs/jwt$": "<rootDir>/test/mocks/jwt.mock.ts"
   },
   "testEnvironment": "node"
 }

@@ -32,6 +32,7 @@ import {
 import { validateWithZod } from '../common/zod/validate-with-zod';
 import { zodToOpenAPISchema } from '../common/openapi/zod-to-openapi';
 import { ShiftsService } from './shifts.service';
+import { Public } from '../auth/public.decorator';
 
 /** Thin HTTP layer for /api/shifts. No business logic here. */
 const requestBody = zodToOpenAPISchema(shiftCreateSchema);
@@ -44,6 +45,7 @@ const idParam = zodToOpenAPISchema(uuidParamSchema);
 export class ShiftsController {
   constructor(private readonly shiftsService: ShiftsService) {}
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'List all shifts' })
   @ApiOkResponse({ description: 'All shifts', schema: zodToOpenAPISchema(shiftListSchema) })
@@ -62,6 +64,7 @@ export class ShiftsController {
     return shiftSchema.parse(await this.shiftsService.create(input));
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get one shift by id' })
   @ApiParam({ name: 'id', schema: idParam })

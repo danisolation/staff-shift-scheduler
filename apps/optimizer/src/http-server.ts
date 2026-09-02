@@ -46,7 +46,10 @@ export async function startOptimizerServer(options: OptimizerServerOptions = {})
   });
 
   await new Promise<void>((resolve) => {
-    server.listen(options.port ?? 0, '127.0.0.1', resolve);
+    // Bind to 0.0.0.0 so the server is reachable from other containers
+    // (Docker networking) and from the host.  127.0.0.1 would only accept
+    // connections from inside the same container.
+    server.listen(options.port ?? 0, '0.0.0.0', resolve);
   });
   const address = server.address();
   if (address === null || typeof address === 'string') {
