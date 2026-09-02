@@ -101,10 +101,10 @@ describe('SchedulePage', () => {
 
     // Polling lands on the finished schedule (the instant "queued"
     // acceptance is covered by the api's integration test).
-    expect(await screen.findByText("This week's schedule")).toBeInTheDocument();
+    expect(await screen.findByText("This Week's Schedule")).toBeInTheDocument();
     expect(screen.getByText('Saturday')).toBeInTheDocument();
     expect(await screen.findByText('08:00–12:00')).toBeInTheDocument();
-    expect(screen.getByText(/objective score 241/i)).toBeInTheDocument();
+    expect(screen.getByText('241')).toBeInTheDocument();
   });
 
   it('lists every conflict in the infeasible view', async () => {
@@ -125,7 +125,7 @@ describe('SchedulePage', () => {
     await waitFor(() => expect(runButton).toBeEnabled());
     fireEvent.click(runButton);
 
-    expect(await screen.findByText('The rules conflict')).toBeInTheDocument();
+    expect(await screen.findByText('The Rules Conflict')).toBeInTheDocument();
     expect(screen.getByText(/requires 2 eligible employee/i)).toBeInTheDocument();
   });
 
@@ -141,7 +141,7 @@ describe('SchedulePage', () => {
     await waitFor(() => expect(runButton).toBeEnabled());
     fireEvent.click(runButton);
 
-    expect(await screen.findByText('Solve failed')).toBeInTheDocument();
+    expect(await screen.findByText('Solve Failed')).toBeInTheDocument();
     expect(screen.getByText(/optimizer is unreachable/i)).toBeInTheDocument();
   });
 

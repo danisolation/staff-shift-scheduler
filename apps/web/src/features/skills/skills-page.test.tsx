@@ -65,7 +65,7 @@ describe('SkillsPage', () => {
   it('creates a skill and the list refetches to include it', async () => {
     renderWithProviders(<SkillsPage />);
 
-    fireEvent.input(screen.getByLabelText('Name'), { target: { value: 'Latte Art' } });
+    fireEvent.input(screen.getByLabelText('Skill Name'), { target: { value: 'Latte Art' } });
     fireEvent.click(screen.getByRole('button', { name: /add skill/i }));
 
     await waitFor(() => {
