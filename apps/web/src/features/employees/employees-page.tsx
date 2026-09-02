@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card';
 import { Skeleton } from '@/ui/skeleton';
+import { Badge } from '@/ui/badge';
 import {
   Table,
   TableBody,
@@ -23,8 +24,8 @@ export function EmployeesPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold">Employees</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-bold">Employees</h1>
+        <p className="mt-2 text-muted-foreground">
           Who can work, what they can do, and when they are available.
         </p>
       </header>
@@ -33,18 +34,23 @@ export function EmployeesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Employees</CardTitle>
-          <CardDescription>Everyone the scheduler can assign to shifts.</CardDescription>
+          <CardTitle>Employee List</CardTitle>
+          <CardDescription>
+            Everyone the scheduler can assign to shifts.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {employees.isPending && (
-            <div className="space-y-2" aria-busy>
-              <Skeleton className="h-6 w-full" />
-              <Skeleton className="h-6 w-2/3" />
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
             </div>
           )}
           {employees.isError && (
-            <p role="alert" className="text-destructive text-sm">{employees.error.message}</p>
+            <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">
+              {employees.error.message}
+            </div>
           )}
           {employees.data !== undefined && (
             <Table>
@@ -60,21 +66,32 @@ export function EmployeesPage() {
                 {employees.data.map((employee) => (
                   <TableRow key={employee.id}>
                     <TableCell className="font-medium">{employee.name}</TableCell>
-                    <TableCell>{employee.skillIds.map(skillName).join(', ')}</TableCell>
                     <TableCell>
-                      {employee.availability
-                        .map(
-                          (window) =>
-                            `${dayName(window.day)} ${formatShiftWindow(window)}`,
-                        )
-                        .join(', ')}
+                      <div className="flex flex-wrap gap-1">
+                        {employee.skillIds.map((skillId) => (
+                          <Badge key={skillId} variant="secondary">
+                            {skillName(skillId)}
+                          </Badge>
+                        ))}
+                      </div>
                     </TableCell>
-                    <TableCell>{formatMinutesAsWeeklyHours(employee.contractMaxMinutes)}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {employee.availability.map((window, i) => (
+                          <Badge key={i} variant="outline">
+                            {dayName(window.day)} {formatShiftWindow(window)}
+                          </Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {formatMinutesAsWeeklyHours(employee.contractMaxMinutes)}
+                    </TableCell>
                   </TableRow>
                 ))}
                 {employees.data.length === 0 && (
                   <TableRow>
-                    <TableCell className="text-muted-foreground" colSpan={4}>
+                    <TableCell className="text-center text-muted-foreground py-8" colSpan={4}>
                       No employees yet — add the first one above.
                     </TableCell>
                   </TableRow>

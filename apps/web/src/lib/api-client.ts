@@ -28,15 +28,23 @@ export class ApiError extends Error {
 /**
  * Performs the request and returns the parsed response body.
  * The schema is always the entity's schema from @scheduler/contracts.
+ * If a token is provided, it's included as a Bearer token in the Authorization header.
  */
 export async function apiFetch<S extends z.ZodType>(
   path: string,
   schema: S,
-  init?: RequestInit,
+  init?: RequestInit & { token?: string | null },
 ): Promise<z.infer<S>> {
+  const { token, ...fetchInit } = init ?? {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(fetchInit.headers as Record<string, string> ?? {}),
+  };
+
   const response = await fetch(path, {
-    headers: { 'Content-Type': 'application/json' },
-    ...init,
+    ...fetchInit,
+    headers,
   });
 
   if (!response.ok) {

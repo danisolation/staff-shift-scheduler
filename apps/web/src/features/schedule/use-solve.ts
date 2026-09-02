@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { solveJobSchema, type SolveJob, type SolveRequest } from '@scheduler/contracts';
 import { apiFetch } from '@/lib/api-client';
+import { useAuth } from '@/lib/auth-context';
 import { apiSolvesKeys } from './keys';
 
 /**
@@ -8,11 +9,13 @@ import { apiSolvesKeys } from './keys';
  * "queued") — the api runs the solve in the background (ADR-005).
  */
 export function useSolveMutation() {
+  const { token } = useAuth();
   return useMutation({
     mutationFn: (problem: SolveRequest) =>
       apiFetch('/api/solves', solveJobSchema, {
         method: 'POST',
         body: JSON.stringify(problem),
+        token,
       }),
   });
 }
@@ -26,6 +29,7 @@ const POLL_INTERVAL_MS = 1000;
  * status is terminal (optimal/feasible/infeasible/failed) polling stops.
  */
 export function useSolveJob(jobId: string | null) {
+  const { token } = useAuth();
   return useQuery({
     queryKey: apiSolvesKeys.detail(jobId ?? 'none'),
     enabled: jobId !== null,
@@ -33,7 +37,7 @@ export function useSolveJob(jobId: string | null) {
       if (jobId === null) {
         throw new Error('No active solve job');
       }
-      return apiFetch(`/api/solves/${jobId}`, solveJobSchema);
+      return apiFetch(`/api/solves/${jobId}`, solveJobSchema, { token });
     },
     refetchInterval: (query) => {
       const status = query.state.data?.status;

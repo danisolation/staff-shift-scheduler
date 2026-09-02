@@ -17,8 +17,8 @@ export function SkillsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold">Skills</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-bold">Skills</h1>
+        <p className="mt-2 text-muted-foreground">
           Define the capabilities your staff has and your shifts need.
         </p>
       </header>
@@ -27,17 +27,24 @@ export function SkillsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Existing skills</CardTitle>
-          <CardDescription>Employees can hold any of these; shifts can require them.</CardDescription>
+          <CardTitle>Existing Skills</CardTitle>
+          <CardDescription>
+            Employees can hold any of these; shifts can require them.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {skills.isPending && (
-            <div className="space-y-2" aria-busy>
-              <Skeleton className="h-6 w-full" />
-              <Skeleton className="h-6 w-3/4" />
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
             </div>
           )}
-          {skills.isError && <p role="alert" className="text-destructive text-sm">{skills.error.message}</p>}
+          {skills.isError && (
+            <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">
+              {skills.error.message}
+            </div>
+          )}
           {skills.data !== undefined && (
             <Table>
               <TableHeader>
@@ -48,12 +55,14 @@ export function SkillsPage() {
               <TableBody>
                 {skills.data.map((skill) => (
                   <TableRow key={skill.id}>
-                    <TableCell>{skill.name}</TableCell>
+                    <TableCell className="font-medium">{skill.name}</TableCell>
                   </TableRow>
                 ))}
                 {skills.data.length === 0 && (
                   <TableRow>
-                    <TableCell className="text-muted-foreground">No skills yet — add the first one above.</TableCell>
+                    <TableCell className="text-center text-muted-foreground py-8">
+                      No skills yet — add the first one above.
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>

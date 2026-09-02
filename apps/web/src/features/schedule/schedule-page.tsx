@@ -56,39 +56,47 @@ export function SchedulePage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold">Schedule</h1>
-        <p className="text-muted-foreground">
-          Runs the optimizer over every employee and shift, then shows the week it produced.
+        <h1 className="text-3xl font-bold">Schedule</h1>
+        <p className="mt-2 text-muted-foreground">
+          Run the optimizer to generate the best schedule for your team.
         </p>
       </header>
 
       <Card>
         <CardHeader>
-          <CardTitle>Run the scheduler</CardTitle>
+          <CardTitle>Run the Scheduler</CardTitle>
           <CardDescription>
             Uses all stored employees and shifts. Shifts are staffed exactly to their
             headcount with qualified, available people; weekend work is balanced.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           {!hasData && (
-            <p className="text-muted-foreground text-sm">
-              Add at least one employee and one shift first (Skills → Employees → Shifts).
-            </p>
+            <div className="rounded-md bg-muted p-4 text-sm">
+              <p className="font-medium">No data yet</p>
+              <p className="mt-1 text-muted-foreground">
+                Add at least one employee and one shift first (Skills → Employees → Shifts).
+              </p>
+            </div>
           )}
-          <Button onClick={onRun} disabled={!hasData || solve.isPending}>
-            {solve.isPending ? 'Submitting…' : 'Run scheduler'}
+          <Button onClick={onRun} disabled={!hasData || solve.isPending} size="lg">
+            {solve.isPending ? 'Submitting...' : 'Run Scheduler'}
           </Button>
           {solve.isError && (
-            <p role="alert" className="text-destructive text-sm">{solve.error.message}</p>
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              {solve.error.message}
+            </div>
           )}
         </CardContent>
       </Card>
 
       {activeJobId === null && !solve.isPending && (
         <Card>
-          <CardContent className="text-muted-foreground py-6 text-center text-sm">
-            No solve yet — run the scheduler above and the week will appear here.
+          <CardContent className="text-center py-12">
+            <div className="text-4xl mb-4">📅</div>
+            <p className="text-muted-foreground">
+              No solve yet — run the scheduler above and the week will appear here.
+            </p>
           </CardContent>
         </Card>
       )}
@@ -96,9 +104,9 @@ export function SchedulePage() {
       {activeJobId !== null && job.isPending && (
         <Card aria-busy>
           <CardHeader>
-            <CardTitle>Checking job status…</CardTitle>
+            <CardTitle>Checking job status...</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-3">
             <Skeleton className="h-6 w-full" />
             <Skeleton className="h-6 w-2/3" />
           </CardContent>
@@ -108,7 +116,9 @@ export function SchedulePage() {
       {activeJobId !== null && job.isError && (
         <Card>
           <CardContent>
-            <p role="alert" className="text-destructive text-sm">{job.error.message}</p>
+            <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">
+              {job.error.message}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -116,7 +126,8 @@ export function SchedulePage() {
       {isPolling && (
         <Card aria-busy>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-3">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               Solving
               <Badge variant="secondary">{job.data?.status}</Badge>
             </CardTitle>
@@ -124,7 +135,7 @@ export function SchedulePage() {
               The optimizer is working — this page polls until the job finishes.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-3">
             <Skeleton className="h-6 w-full" />
             <Skeleton className="h-6 w-5/6" />
             <Skeleton className="h-6 w-3/4" />
@@ -135,8 +146,9 @@ export function SchedulePage() {
       {solved !== undefined && employees.data !== undefined && shifts.data !== undefined && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              This week's schedule
+            <CardTitle className="flex items-center gap-3">
+              <span className="text-2xl">📊</span>
+              This Week's Schedule
               <Badge variant={job.data?.status === 'optimal' ? 'default' : 'secondary'}>
                 {job.data?.status}
               </Badge>
@@ -145,7 +157,7 @@ export function SchedulePage() {
               {job.data?.status === 'optimal'
                 ? 'Objective score '
                 : 'A valid schedule (optimality not proven — the solver hit its time limit). Objective score '}
-              {solved.objectiveValue}
+              <span className="font-mono font-medium">{solved.objectiveValue}</span>
               {job.data?.status === 'optimal' &&
                 ' — lower is better (assigned minutes plus the weekend-balance penalty).'}
             </CardDescription>
@@ -157,7 +169,7 @@ export function SchedulePage() {
               assignments={solved.assignments}
             />
             <Button variant="outline" onClick={clearActiveJob}>
-              Clear
+              Clear Schedule
             </Button>
           </CardContent>
         </Card>
@@ -166,15 +178,21 @@ export function SchedulePage() {
       {infeasible !== undefined && (
         <Card className="border-destructive">
           <CardHeader>
-            <CardTitle className="text-destructive">The rules conflict</CardTitle>
+            <CardTitle className="text-destructive flex items-center gap-2">
+              <span>⚠️</span>
+              The Rules Conflict
+            </CardTitle>
             <CardDescription>
               No schedule can satisfy every constraint. Each reason below names what to change.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <ul className="list-disc space-y-1 pl-5">
+            <ul className="space-y-2">
               {infeasible.conflicts.map((conflict) => (
-                <li key={conflict} className="text-sm">{conflict}</li>
+                <li key={conflict} className="flex items-start gap-2 text-sm">
+                  <span className="mt-1 text-destructive">•</span>
+                  {conflict}
+                </li>
               ))}
             </ul>
             <Button variant="outline" onClick={clearActiveJob}>
@@ -187,12 +205,15 @@ export function SchedulePage() {
       {job.data?.status === 'failed' && (
         <Card className="border-destructive">
           <CardHeader>
-            <CardTitle className="text-destructive">Solve failed</CardTitle>
+            <CardTitle className="text-destructive flex items-center gap-2">
+              <span>❌</span>
+              Solve Failed
+            </CardTitle>
             <CardDescription>{job.data.message ?? 'The solver reported an error.'}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="outline" onClick={clearActiveJob}>
-              Try again
+              Try Again
             </Button>
           </CardContent>
         </Card>

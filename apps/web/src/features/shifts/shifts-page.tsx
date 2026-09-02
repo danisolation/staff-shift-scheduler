@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card';
 import { Skeleton } from '@/ui/skeleton';
+import { Badge } from '@/ui/badge';
 import {
   Table,
   TableBody,
@@ -23,8 +24,8 @@ export function ShiftsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold">Shifts</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-bold">Shifts</h1>
+        <p className="mt-2 text-muted-foreground">
           The time windows that must be staffed during the week.
         </p>
       </header>
@@ -33,25 +34,32 @@ export function ShiftsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Shifts</CardTitle>
-          <CardDescription>What the scheduler must cover.</CardDescription>
+          <CardTitle>Shift List</CardTitle>
+          <CardDescription>
+            What the scheduler must cover.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {shifts.isPending && (
-            <div className="space-y-2" aria-busy>
-              <Skeleton className="h-6 w-full" />
-              <Skeleton className="h-6 w-1/2" />
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
             </div>
           )}
-          {shifts.isError && <p role="alert" className="text-destructive text-sm">{shifts.error.message}</p>}
+          {shifts.isError && (
+            <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">
+              {shifts.error.message}
+            </div>
+          )}
           {shifts.data !== undefined && (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Day</TableHead>
-                  <TableHead>Window</TableHead>
-                  <TableHead>Required skills</TableHead>
-                  <TableHead>People needed</TableHead>
+                  <TableHead>Time Window</TableHead>
+                  <TableHead>Required Skills</TableHead>
+                  <TableHead>People Needed</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -59,13 +67,21 @@ export function ShiftsPage() {
                   <TableRow key={shift.id}>
                     <TableCell className="font-medium">{dayName(shift.day)}</TableCell>
                     <TableCell>{formatShiftWindow(shift)}</TableCell>
-                    <TableCell>{shift.requiredSkillIds.map(skillName).join(', ')}</TableCell>
-                    <TableCell>{shift.headcount}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {shift.requiredSkillIds.map((skillId) => (
+                          <Badge key={skillId} variant="secondary">
+                            {skillName(skillId)}
+                          </Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">{shift.headcount}</TableCell>
                   </TableRow>
                 ))}
                 {shifts.data.length === 0 && (
                   <TableRow>
-                    <TableCell className="text-muted-foreground" colSpan={4}>
+                    <TableCell className="text-center text-muted-foreground py-8" colSpan={4}>
                       No shifts yet — add the first one above.
                     </TableCell>
                   </TableRow>

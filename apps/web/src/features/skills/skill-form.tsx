@@ -31,30 +31,34 @@ export function SkillForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Add a skill</CardTitle>
+        <CardTitle>Add a Skill</CardTitle>
         <CardDescription>
           Skills are the capabilities employees can hold and shifts can require.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={(event) => void onSubmit(event)} className="flex items-end gap-3">
+        <form onSubmit={(event) => void onSubmit(event)} className="flex items-end gap-4">
           <div className="flex-1 space-y-2">
-            <Label htmlFor="skill-name">Name</Label>
-            <Input id="skill-name" placeholder="Barista" {...register('name')} />
+            <Label htmlFor="skill-name">Skill Name</Label>
+            <Input
+              id="skill-name"
+              placeholder="e.g., Barista, Cashier, Chef"
+              {...register('name')}
+            />
             {errors.name !== undefined && (
-              <p role="alert" className="text-destructive text-sm">
+              <p role="alert" className="text-sm text-destructive">
                 {errors.name.message}
               </p>
             )}
           </div>
           <Button type="submit" disabled={createSkill.isPending}>
-            {createSkill.isPending ? 'Adding…' : 'Add skill'}
+            {createSkill.isPending ? 'Adding...' : 'Add Skill'}
           </Button>
         </form>
         {createSkill.isError && (
-          <p role="alert" className="text-destructive mt-3 text-sm">
+          <div className="mt-3 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
             {createSkill.error.message}
-          </p>
+          </div>
         )}
       </CardContent>
     </Card>
